@@ -2,6 +2,7 @@
 	"name": "remote-mcp-server-authless",
 	"version": "0.0.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
@@ -12,9 +13,10 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.13.1",
+		"@cloudflare/agents": "^0.0.16",
+		"@modelcontextprotocol/sdk": "^1.13.1",
 		"agents": "^0.0.100",
-		"zod": "^3.25.67"
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.6",
