@@ -1,11 +1,20 @@
 {
-	"name": "context-mcp-server",
+	"name": "@semanticintent/semantic-context-mcp",
 	"version": "1.0.0",
-	"description": "A remote MCP server for managing conversation context with AI enhancement",
+	"description": "Reference implementation of Semantic Intent patterns for MCP context management with AI enhancement",
+	"keywords": [
+		"mcp",
+		"semantic-intent",
+		"semantic-anchoring",
+		"context-management",
+		"ai-collaboration",
+		"cloudflare-workers",
+		"intent-preservation"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/semanticintent/context-mcp-server.git"
+		"url": "https://github.com/semanticintent/semantic-context-mcp.git"
 	},
 	"author": "semanticintent",
 	"type": "module",
