@@ -1,6 +1,8 @@
-# Building a Remote MCP Server on Cloudflare (Without Auth)
+# Context MCP Server
 
-This example allows you to deploy a remote MCP server that doesn't require authentication on Cloudflare Workers. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A remote Model Context Protocol (MCP) server for managing conversation context with AI enhancement, deployed on Cloudflare Workers. 
 
 ## Get started: 
 
@@ -36,7 +38,7 @@ Update with this configuration:
 ```json
 {
   "mcpServers": {
-    "calculator": {
+    "context-manager": {
       "command": "npx",
       "args": [
         "mcp-remote",
@@ -47,4 +49,18 @@ Update with this configuration:
 }
 ```
 
-Restart Claude and you should see the tools become available. 
+Restart Claude and you should see the tools become available.
+
+## Features
+
+- **save_context**: Save conversation context with AI-powered summarization and auto-tagging
+- **load_context**: Retrieve relevant context for a project
+- **search_context**: Search contexts using keyword matching
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests. 

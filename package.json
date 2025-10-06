@@ -1,7 +1,13 @@
 {
-	"name": "remote-mcp-server-authless",
-	"version": "0.0.0",
-	"private": true,
+	"name": "context-mcp-server",
+	"version": "1.0.0",
+	"description": "A remote MCP server for managing conversation context with AI enhancement",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/semanticintent/context-mcp-server.git"
+	},
+	"author": "semanticintent",
 	"type": "module",
 	"scripts": {
 		"deploy": "wrangler deploy",
