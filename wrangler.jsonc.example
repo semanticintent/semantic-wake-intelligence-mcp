@@ -1,0 +1,31 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "semantic-context-mcp",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-03-10",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "mcp-context",
+			"database_id": "YOUR_DATABASE_ID_HERE"
+		}
+	],
+	"ai": {
+		"binding": "AI"
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "MCP_OBJECT",
+				"class_name": "ContextMCP",
+				"script_name": "semantic-context-mcp"
+			}
+		]
+	},
+	"observability": {
+		"enabled": true
+	}
+}

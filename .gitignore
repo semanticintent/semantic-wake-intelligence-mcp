@@ -175,3 +175,7 @@ dist
 !.dev.vars.example
 .env*
 !.env.example
+
+# Wrangler configuration with secrets
+wrangler.jsonc
+!wrangler.jsonc.example

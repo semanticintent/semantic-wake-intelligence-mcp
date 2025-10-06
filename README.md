@@ -23,16 +23,69 @@ Built on research from [Semantic Intent as Single Source of Truth](https://githu
 
 ---
 
-## 🚀 Quick Start 
+## 🚀 Quick Start
 
-[![Deploy to Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/ai/tree/main/demos/remote-mcp-authless)
+### Prerequisites
 
-This will deploy your MCP server to a URL like: `remote-mcp-server-authless.<your-account>.workers.dev/sse`
+- Node.js 20.x or higher
+- Cloudflare account (free tier works)
+- Wrangler CLI: `npm install -g wrangler`
 
-Alternatively, you can use the command line below to get the remote MCP Server created on your local machine:
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/semanticintent/semantic-context-mcp.git
+   cd semantic-context-mcp
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Wrangler**
+
+   Copy the example configuration:
+   ```bash
+   cp wrangler.jsonc.example wrangler.jsonc
+   ```
+
+   Create a D1 database:
+   ```bash
+   wrangler d1 create mcp-context
+   ```
+
+   Update `wrangler.jsonc` with your database ID:
+   ```jsonc
+   {
+     "d1_databases": [{
+       "database_id": "your-database-id-from-above-command"
+     }]
+   }
+   ```
+
+4. **Run database migrations**
+   ```bash
+   # Local development
+   wrangler d1 execute mcp-context --local --file=./migrations/0001_initial_schema.sql
+
+   # Production
+   wrangler d1 execute mcp-context --file=./migrations/0001_initial_schema.sql
+   ```
+
+5. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+### Deploy to Production
+
 ```bash
-npm create cloudflare@latest -- my-mcp-server --template=cloudflare/ai/demos/remote-mcp-authless
+npm run deploy
 ```
+
+Your MCP server will be available at: `semantic-context-mcp.<your-account>.workers.dev`
 
 ## 📚 Learning from This Implementation
 
