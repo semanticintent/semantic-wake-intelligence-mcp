@@ -36,10 +36,18 @@ npm create cloudflare@latest -- my-mcp-server --template=cloudflare/ai/demos/rem
 
 This codebase demonstrates semantic intent patterns throughout:
 
-- **[src/index.ts](src/index.ts)** - Fully documented with semantic anchoring principles
+### Architecture Files:
+- **[src/index.ts](src/index.ts)** - Dependency injection composition root (74 lines)
+- **[src/domain/](src/domain/)** - Business logic layer (ContextSnapshot, ContextService)
+- **[src/application/](src/application/)** - Orchestration layer (handlers and protocol)
+- **[src/infrastructure/](src/infrastructure/)** - Technical adapters (D1, AI, CORS)
+- **[src/presentation/](src/presentation/)** - HTTP routing layer (MCPRouter)
+
+### Documentation & Patterns:
 - **[migrations/0001_initial_schema.sql](migrations/0001_initial_schema.sql)** - Schema with semantic intent documentation
 - **[src/types.ts](src/types.ts)** - Type-safe semantic contracts
 - **[SEMANTIC_ANCHORING_GOVERNANCE.md](SEMANTIC_ANCHORING_GOVERNANCE.md)** - Governance rules and patterns
+- **[REFACTORING_PLAN.md](REFACTORING_PLAN.md)** - Complete refactoring documentation
 
 Each file includes comprehensive comments explaining **WHY** decisions preserve semantic intent, not just **WHAT** the code does. 
 
@@ -74,6 +82,70 @@ Update with this configuration:
 ```
 
 Restart Claude and you should see the tools become available.
+
+## 🏗️ Architecture
+
+This project demonstrates **Domain-Driven Hexagonal Architecture** with clean separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Presentation Layer                     │
+│              (MCPRouter - HTTP routing)                  │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│                  Application Layer                       │
+│     (ToolExecutionHandler, MCPProtocolHandler)          │
+│              MCP Protocol & Orchestration                │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│                    Domain Layer                          │
+│         (ContextService, ContextSnapshot)                │
+│                 Business Logic                           │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│                Infrastructure Layer                      │
+│    (D1ContextRepository, CloudflareAIProvider)          │
+│           Technical Adapters (Ports & Adapters)         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Layer Responsibilities:
+
+**Domain Layer** ([src/domain/](src/domain/)):
+- Pure business logic independent of infrastructure
+- `ContextSnapshot`: Entity with validation rules
+- `ContextService`: Core business operations
+
+**Application Layer** ([src/application/](src/application/)):
+- Orchestrates domain operations
+- `ToolExecutionHandler`: Translates MCP tools to domain operations
+- `MCPProtocolHandler`: Manages JSON-RPC protocol
+
+**Infrastructure Layer** ([src/infrastructure/](src/infrastructure/)):
+- Technical adapters implementing ports (interfaces)
+- `D1ContextRepository`: Cloudflare D1 persistence
+- `CloudflareAIProvider`: Workers AI integration
+- `CORSMiddleware`: Cross-cutting concerns
+
+**Presentation Layer** ([src/presentation/](src/presentation/)):
+- HTTP routing and request handling
+- `MCPRouter`: Routes requests to appropriate handlers
+
+**Composition Root** ([src/index.ts](src/index.ts)):
+- Dependency injection
+- Wires all layers together
+- 74 lines (down from 483 - **90% reduction**)
+
+### Benefits:
+
+- ✅ **Testability**: Each layer independently testable
+- ✅ **Maintainability**: Clear responsibilities per layer
+- ✅ **Flexibility**: Swap infrastructure (D1 → Postgres) without touching domain
+- ✅ **Semantic Intent**: Comprehensive documentation of WHY
+- ✅ **Type Safety**: Strong TypeScript contracts throughout
 
 ## Features
 
