@@ -25,7 +25,11 @@
 		"lint:fix": "biome lint --fix",
 		"start": "wrangler dev",
 		"cf-typegen": "wrangler types",
-		"type-check": "tsc --noEmit"
+		"type-check": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui",
+		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
 		"@cloudflare/agents": "^0.0.16",
@@ -35,8 +39,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.6",
+		"@cloudflare/vitest-pool-workers": "^0.9.10",
 		"@types/node": "^24.1.0",
+		"@vitest/ui": "^3.2.4",
 		"typescript": "^5.8.3",
+		"vitest": "^3.2.4",
 		"wrangler": "^4.27.0"
 	}
 }

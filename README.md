@@ -153,6 +153,56 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 - **load_context**: Retrieve relevant context for a project
 - **search_context**: Search contexts using keyword matching
 
+## 🧪 Testing
+
+This project includes comprehensive unit tests with **70 tests** covering all architectural layers.
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Coverage
+
+- ✅ **Domain Layer**: 15 tests (ContextSnapshot validation, ContextService orchestration)
+- ✅ **Application Layer**: 10 tests (ToolExecutionHandler, MCP tool dispatch)
+- ✅ **Infrastructure Layer**: 20 tests (D1Repository, CloudflareAIProvider with fallbacks)
+- ✅ **Presentation Layer**: 12 tests (MCPRouter, CORS, error handling)
+- ✅ **Integration**: 13 tests (End-to-end service flows)
+
+### Test Structure
+
+Tests are co-located with source files using the `.test.ts` suffix:
+
+```
+src/
+├── domain/
+│   ├── models/
+│   │   ├── ContextSnapshot.ts
+│   │   └── ContextSnapshot.test.ts
+│   └── services/
+│       ├── ContextService.ts
+│       └── ContextService.test.ts
+├── application/
+│   └── handlers/
+│       ├── ToolExecutionHandler.ts
+│       └── ToolExecutionHandler.test.ts
+└── ...
+```
+
+All tests use **Vitest** with mocking for external dependencies (D1, AI services).
+
 ## Database Setup
 
 This project uses Cloudflare D1 for persistent context storage.
