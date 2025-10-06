@@ -1,6 +1,8 @@
 # Semantic Context MCP
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/semanticintent/semantic-context-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-context-mcp/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-70%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-context-mcp)
 [![Semantic Intent](https://img.shields.io/badge/Pattern-Semantic%20Intent-blue.svg)](https://github.com/semanticintent)
 [![Reference Implementation](https://img.shields.io/badge/Status-Reference%20Implementation-green.svg)](https://github.com/semanticintent/semantic-context-mcp)
 
@@ -202,6 +204,26 @@ src/
 ```
 
 All tests use **Vitest** with mocking for external dependencies (D1, AI services).
+
+### Continuous Integration
+
+This project uses **GitHub Actions** for automated testing and quality checks.
+
+**Automated Checks on Every Push/PR:**
+- ✅ TypeScript compilation (`npm run type-check`)
+- ✅ Unit tests (`npm test`)
+- ✅ Test coverage reports
+- ✅ Code formatting (Biome)
+- ✅ Linting (Biome)
+
+**Status Badges:**
+- CI status displayed at top of README
+- Automatically updates on each commit
+- Shows passing/failing state
+
+**Workflow Configuration:** [.github/workflows/ci.yml](.github/workflows/ci.yml)
+
+The CI pipeline runs on Node.js 20.x and ensures code quality before merging.
 
 ## Database Setup
 
