@@ -73,7 +73,7 @@ export class D1ContextRepository implements IContextRepository {
        LIMIT ?`
     ).bind(project, limit).all();
 
-    return (results as ContextSnapshot[]) || [];
+    return (results as unknown as ContextSnapshot[]) || [];
   }
 
   /**
@@ -99,6 +99,6 @@ export class D1ContextRepository implements IContextRepository {
 
     const { results } = await this.db.prepare(sql).bind(...params).all();
 
-    return (results as ContextSnapshot[]) || [];
+    return (results as unknown as ContextSnapshot[]) || [];
   }
 }

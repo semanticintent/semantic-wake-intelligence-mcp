@@ -14,6 +14,14 @@
  */
 
 /**
+ * Cloudflare Workers Environment bindings
+ */
+export interface Env {
+  DB: D1Database;
+  AI: Ai;
+}
+
+/**
  * 🎯 SEMANTIC DOMAIN MODEL: Context Snapshot
  *
  * Represents a preserved conversation context with AI-enhanced metadata.
