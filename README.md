@@ -3,12 +3,30 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-context-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-context-mcp/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-70%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-context-mcp)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+
 [![Semantic Intent](https://img.shields.io/badge/Pattern-Semantic%20Intent-blue.svg)](https://github.com/semanticintent)
 [![Reference Implementation](https://img.shields.io/badge/Status-Reference%20Implementation-green.svg)](https://github.com/semanticintent/semantic-context-mcp)
+[![Hexagonal Architecture](https://img.shields.io/badge/Architecture-Hexagonal-purple.svg)](docs/ARCHITECTURE.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant-blue.svg)](CODE_OF_CONDUCT.md)
 
 > **Reference implementation of Semantic Intent as Single Source of Truth patterns**
 >
 > A Model Context Protocol (MCP) server demonstrating semantic anchoring, intent preservation, and observable property patterns for AI-assisted development.
+
+## 📚 Table of Contents
+
+- [What Makes This Different](#-what-makes-this-different)
+- [Quick Start](#-quick-start)
+- [Architecture](#-architecture)
+- [Features](#features)
+- [Testing](#-testing)
+- [Database Setup](#database-setup)
+- [Contributing](#-contributing)
+- [Security](#-security)
+- [License](#license)
 
 ## 🎯 What Makes This Different
 
@@ -358,11 +376,43 @@ This implementation is based on the research paper **"Semantic Intent as Single 
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please ensure:
+We welcome contributions! This is a **reference implementation**, so contributions should maintain semantic intent principles.
 
-- Changes follow semantic intent principles documented in [SEMANTIC_ANCHORING_GOVERNANCE.md](SEMANTIC_ANCHORING_GOVERNANCE.md)
-- Code includes semantic intent documentation (WHY, not just WHAT)
-- Type safety is maintained in [src/types.ts](src/types.ts)
-- Migrations follow versioned pattern in [migrations/](migrations/)
+### How to Contribute
 
-Feel free to open issues or submit pull requests! 
+1. **Read the guidelines**: [CONTRIBUTING.md](CONTRIBUTING.md)
+2. **Check existing issues**: Avoid duplicates
+3. **Follow the architecture**: Maintain layer boundaries
+4. **Add tests**: All changes need test coverage
+5. **Document intent**: Explain WHY, not just WHAT
+
+### Contribution Standards
+
+- ✅ Follow semantic intent patterns
+- ✅ Maintain hexagonal architecture
+- ✅ Add comprehensive tests
+- ✅ Include semantic documentation
+- ✅ Pass all CI checks
+
+**Quick Links:**
+- [Contributing Guide](CONTRIBUTING.md) - Detailed guidelines
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Community standards
+- [Architecture Guide](docs/ARCHITECTURE.md) - Design principles
+- [Security Policy](SECURITY.md) - Report vulnerabilities
+
+### Community
+
+- 💬 [Discussions](https://github.com/semanticintent/semantic-context-mcp/discussions) - Ask questions
+- 🐛 [Issues](https://github.com/semanticintent/semantic-context-mcp/issues) - Report bugs
+- 🔒 [Security](SECURITY.md) - Report vulnerabilities privately
+
+## 🔒 Security
+
+Security is a top priority. Please review our [Security Policy](SECURITY.md) for:
+
+- Secrets management best practices
+- What to commit / what to exclude
+- Reporting security vulnerabilities
+- Security checklist for deployment
+
+**Found a vulnerability?** Email: security@semanticintent.dev 

@@ -1,0 +1,28 @@
+# Code Owners - Automatic PR Review Assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owner - reviews all changes by default
+* @semanticintent
+
+# Architecture & Domain Logic
+/src/domain/ @semanticintent
+/src/application/ @semanticintent
+
+# Infrastructure & Adapters
+/src/infrastructure/ @semanticintent
+
+# Security-sensitive files
+/SECURITY.md @semanticintent
+/.github/workflows/ @semanticintent
+/wrangler.jsonc.example @semanticintent
+
+# Documentation
+/docs/ @semanticintent
+/*.md @semanticintent
+
+# Database Migrations (require extra scrutiny)
+/migrations/ @semanticintent
+
+# Testing Infrastructure
+/vitest.config.ts @semanticintent
+**/*.test.ts @semanticintent
