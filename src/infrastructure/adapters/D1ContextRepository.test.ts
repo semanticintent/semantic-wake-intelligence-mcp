@@ -30,7 +30,7 @@ class MockD1PreparedStatement {
     return { success: true };
   }
 
-  async all() {
+  async all(): Promise<{ results: unknown[] }> {
     return { results: [] };
   }
 }

@@ -155,7 +155,7 @@ describe('MCPRouter', () => {
 
       // Assert
       expect(response.status).toBe(400);
-      const json = await response.json();
+      const json = await response.json() as { error: { code: number; message: string } };
       expect(json.error.code).toBe(-32700); // Parse error
       expect(json.error.message).toBe('Parse error');
     });
@@ -193,7 +193,7 @@ describe('MCPRouter', () => {
 
       // Assert - Router catches errors in try-catch and returns 400
       expect(response.status).toBe(400);
-      const json = await response.json();
+      const json = await response.json() as { error?: unknown };
       expect(json.error).toBeDefined();
     });
   });
