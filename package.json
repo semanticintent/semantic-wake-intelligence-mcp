@@ -1,20 +1,26 @@
 {
-	"name": "@semanticintent/semantic-context-mcp",
-	"version": "1.0.0",
-	"description": "Reference implementation of Semantic Intent patterns for MCP context management with AI enhancement",
+	"name": "@semanticintent/semantic-wake-intelligence-mcp",
+	"version": "2.0.0",
+	"description": "Wake Intelligence - Temporal intelligence for AI context management. Part of the Cormorant Trinity (Sound-Space-Time dimensional framework).",
 	"keywords": [
 		"mcp",
+		"wake-intelligence",
+		"temporal-intelligence",
+		"memory-management",
+		"context-management",
 		"semantic-intent",
 		"semantic-anchoring",
-		"context-management",
+		"cormorant-trinity",
 		"ai-collaboration",
 		"cloudflare-workers",
-		"intent-preservation"
+		"intent-preservation",
+		"causality-tracking",
+		"time-dimension"
 	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/semanticintent/semantic-context-mcp.git"
+		"url": "https://github.com/semanticintent/semantic-wake-intelligence-mcp.git"
 	},
 	"author": "semanticintent",
 	"type": "module",

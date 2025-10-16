@@ -19,9 +19,13 @@
  * 2. Summary is required (semantic essence)
  * 3. ID is immutable (referential integrity)
  * 4. Timestamp auto-generated (temporal anchor)
+ * 5. Causality optional (Layer 1: Past tracking)
+ *
+ * WAKE INTELLIGENCE:
+ * - Layer 1 (Causality Engine): Tracks WHY this was saved
  */
 
-import type { ContextSnapshot as IContextSnapshot, SaveContextInput } from '../../types';
+import type { ContextSnapshot as IContextSnapshot, CausalityMetadata, SaveContextInput } from '../../types';
 
 /**
  * Domain entity for context snapshots.
@@ -39,7 +43,8 @@ export class ContextSnapshot implements IContextSnapshot {
     public readonly source: string,
     public readonly metadata: string | null,
     public readonly tags: string,
-    public readonly timestamp: string
+    public readonly timestamp: string,
+    public readonly causality: CausalityMetadata | null
   ) {
     this.validate();
   }
@@ -71,6 +76,7 @@ export class ContextSnapshot implements IContextSnapshot {
    * - Applies default source ('mcp')
    * - Auto-generates timestamp
    * - Serializes metadata to JSON
+   * - Accepts optional causality metadata (Layer 1)
    *
    * @param data - Input data with semantic content
    * @returns Valid, self-validated context snapshot
@@ -81,6 +87,7 @@ export class ContextSnapshot implements IContextSnapshot {
     source?: string;
     metadata?: Record<string, unknown>;
     tags: string;
+    causality?: CausalityMetadata;
   }): ContextSnapshot {
     return new ContextSnapshot(
       crypto.randomUUID(), // Immutable unique identifier
@@ -89,7 +96,8 @@ export class ContextSnapshot implements IContextSnapshot {
       data.source || 'mcp', // Default provenance
       data.metadata ? JSON.stringify(data.metadata) : null,
       data.tags,
-      new Date().toISOString() // Temporal semantic anchor
+      new Date().toISOString(), // Temporal semantic anchor
+      data.causality || null // Layer 1: Causality tracking
     );
   }
 
@@ -111,7 +119,8 @@ export class ContextSnapshot implements IContextSnapshot {
       data.source,
       data.metadata,
       data.tags,
-      data.timestamp
+      data.timestamp,
+      data.causality
     );
   }
 }

@@ -50,8 +50,8 @@ Enhancement suggestions are tracked as GitHub issues. Include:
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/semanticintent/semantic-context-mcp.git
-   cd semantic-context-mcp
+   git clone https://github.com/semanticintent/semantic-wake-intelligence-mcp.git
+   cd semantic-wake-intelligence-mcp
    ```
 
 2. **Create a feature branch**
@@ -187,7 +187,7 @@ Closes #123
 ## 🏗️ Project Structure
 
 ```
-semantic-context-mcp/
+semantic-wake-intelligence-mcp/
 ├── .github/
 │   ├── workflows/           # CI/CD automation
 │   ├── ISSUE_TEMPLATE/      # Issue templates

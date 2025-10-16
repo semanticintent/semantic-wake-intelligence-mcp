@@ -72,9 +72,10 @@ describe('D1ContextRepository', () => {
         expect.stringContaining('INSERT INTO context_snapshots')
       );
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('(id, project, summary, source, metadata, tags, timestamp)')
+        expect.stringContaining('action_type, rationale, dependencies, caused_by')
       );
 
+      // Expect 11 parameters (7 original + 4 causality)
       expect(bindSpy).toHaveBeenCalledWith(
         snapshot.id,
         snapshot.project,
@@ -82,7 +83,11 @@ describe('D1ContextRepository', () => {
         snapshot.source,
         snapshot.metadata,
         snapshot.tags,
-        snapshot.timestamp
+        snapshot.timestamp,
+        null, // action_type
+        null, // rationale
+        null, // dependencies
+        null  // caused_by
       );
 
       expect(runSpy).toHaveBeenCalled();

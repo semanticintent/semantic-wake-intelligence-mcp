@@ -164,7 +164,8 @@ describe('ToolExecutionHandler', () => {
           'mcp',
           null,
           'tag1',
-          '2025-10-06T12:00:00.000Z'
+          '2025-10-06T12:00:00.000Z',
+          null // causality
         ),
         new ContextSnapshot(
           'id-2',
@@ -173,7 +174,8 @@ describe('ToolExecutionHandler', () => {
           'mcp',
           null,
           'tag2',
-          '2025-10-06T11:00:00.000Z'
+          '2025-10-06T11:00:00.000Z',
+          null // causality
         ),
       ];
 
@@ -223,7 +225,8 @@ describe('ToolExecutionHandler', () => {
           'mcp',
           null,
           'feature,important',
-          '2025-10-06T12:00:00.000Z'
+          '2025-10-06T12:00:00.000Z',
+          null // causality
         ),
       ];
 

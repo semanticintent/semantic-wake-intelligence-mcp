@@ -34,16 +34,56 @@ export class D1ContextRepository implements IContextRepository {
   constructor(private readonly db: D1Database) {}
 
   /**
+   * 🎯 WAKE INTELLIGENCE: Deserialize causality metadata from database row
+   *
+   * PURPOSE: Convert stored JSON strings back to CausalityMetadata object
+   *
+   * @param row - Database row with causality columns
+   * @returns ContextSnapshot with deserialized causality
+   */
+  private deserializeCausality(row: any): ContextSnapshot {
+    const causality = row.action_type
+      ? {
+          actionType: row.action_type,
+          rationale: row.rationale || '',
+          dependencies: row.dependencies ? JSON.parse(row.dependencies) : [],
+          causedBy: row.caused_by || null,
+        }
+      : null;
+
+    return {
+      id: row.id,
+      project: row.project,
+      summary: row.summary,
+      source: row.source,
+      metadata: row.metadata,
+      tags: row.tags,
+      timestamp: row.timestamp,
+      causality,
+    };
+  }
+
+  /**
    * 🎯 SEMANTIC INTENT: Persist context snapshot to D1
    *
    * TECHNICAL IMPLEMENTATION:
    * - INSERT INTO context_snapshots
    * - Returns generated ID for immutable reference
+   * - Includes causality metadata (Layer 1: Past)
    */
   async save(snapshot: ContextSnapshot): Promise<string> {
+    // Serialize causality metadata for storage
+    const actionType = snapshot.causality?.actionType || null;
+    const rationale = snapshot.causality?.rationale || null;
+    const dependencies = snapshot.causality?.dependencies
+      ? JSON.stringify(snapshot.causality.dependencies)
+      : null;
+    const causedBy = snapshot.causality?.causedBy || null;
+
     await this.db.prepare(
-      `INSERT INTO context_snapshots (id, project, summary, source, metadata, tags, timestamp)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO context_snapshots
+       (id, project, summary, source, metadata, tags, timestamp, action_type, rationale, dependencies, caused_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       snapshot.id,
       snapshot.project,
@@ -51,7 +91,11 @@ export class D1ContextRepository implements IContextRepository {
       snapshot.source,
       snapshot.metadata,
       snapshot.tags,
-      snapshot.timestamp
+      snapshot.timestamp,
+      actionType,
+      rationale,
+      dependencies,
+      causedBy
     ).run();
 
     return snapshot.id;
@@ -65,7 +109,7 @@ export class D1ContextRepository implements IContextRepository {
    * - Order by timestamp DESC (temporal relevance)
    * - Limit results (bounded retrieval)
    */
-  async findByProject(project: string, limit: number): Promise<ContextSnapshot[]> {
+  async findByProject(project: string, limit: number = 10): Promise<ContextSnapshot[]> {
     const { results } = await this.db.prepare(
       `SELECT * FROM context_snapshots
        WHERE project = ?
@@ -73,7 +117,66 @@ export class D1ContextRepository implements IContextRepository {
        LIMIT ?`
     ).bind(project, limit).all();
 
-    return (results as unknown as ContextSnapshot[]) || [];
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find snapshot by ID (Layer 1: Causality Engine)
+   *
+   * PURPOSE: Enable causal chain reconstruction
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - SELECT by ID (primary key lookup)
+   * - Returns single snapshot or null
+   */
+  async findById(id: string): Promise<ContextSnapshot | null> {
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots WHERE id = ? LIMIT 1`
+    ).bind(id).all();
+
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    return this.deserializeCausality(results[0]);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find recent contexts (Layer 1: Dependency Detection)
+   *
+   * PURPOSE: Auto-detect dependencies based on temporal proximity
+   *
+   * HEURISTIC:
+   * - Find contexts in project before reference timestamp
+   * - Look back N hours
+   * - Order by recency (newest first)
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - Calculate cutoff time (beforeTimestamp - hoursBack)
+   * - SELECT WHERE project AND timestamp in range
+   * - ORDER BY timestamp DESC
+   */
+  async findRecent(
+    project: string,
+    beforeTimestamp: string,
+    hoursBack: number
+  ): Promise<ContextSnapshot[]> {
+    // Calculate cutoff timestamp
+    const beforeDate = new Date(beforeTimestamp);
+    const cutoffDate = new Date(beforeDate.getTime() - hoursBack * 60 * 60 * 1000);
+    const cutoffTimestamp = cutoffDate.toISOString();
+
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots
+       WHERE project = ?
+       AND timestamp >= ?
+       AND timestamp < ?
+       ORDER BY timestamp DESC`
+    ).bind(project, cutoffTimestamp, beforeTimestamp).all();
+
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
   }
 
   /**
@@ -99,6 +202,7 @@ export class D1ContextRepository implements IContextRepository {
 
     const { results } = await this.db.prepare(sql).bind(...params).all();
 
-    return (results as unknown as ContextSnapshot[]) || [];
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
   }
 }

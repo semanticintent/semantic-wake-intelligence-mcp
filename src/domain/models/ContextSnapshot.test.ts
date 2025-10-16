@@ -23,7 +23,8 @@ describe('ContextSnapshot Domain Entity', () => {
           'mcp',
           null,
           'tag1,tag2',
-          new Date().toISOString()
+          new Date().toISOString(),
+          null // causality
         );
       }).toThrow('Semantic violation: Project is required (domain anchor missing)');
     });
@@ -37,7 +38,8 @@ describe('ContextSnapshot Domain Entity', () => {
           'mcp',
           null,
           'tag1,tag2',
-          new Date().toISOString()
+          new Date().toISOString(),
+          null // causality
         );
       }).toThrow('Semantic violation: Project is required (domain anchor missing)');
     });
@@ -51,7 +53,8 @@ describe('ContextSnapshot Domain Entity', () => {
           'mcp',
           null,
           'tag1,tag2',
-          new Date().toISOString()
+          new Date().toISOString(),
+          null // causality
         );
       }).toThrow('Semantic violation: Summary is required (semantic essence missing)');
     });
@@ -65,7 +68,8 @@ describe('ContextSnapshot Domain Entity', () => {
           'mcp',
           null,
           'tag1,tag2',
-          new Date().toISOString()
+          new Date().toISOString(),
+          null // causality
         );
       }).toThrow('Semantic violation: Summary is required (semantic essence missing)');
     });
@@ -78,7 +82,8 @@ describe('ContextSnapshot Domain Entity', () => {
         'mcp',
         null,
         'tag1,tag2',
-        new Date().toISOString()
+        new Date().toISOString(),
+        null // causality
       );
 
       expect(snapshot.id).toBe('test-id');
@@ -184,6 +189,7 @@ describe('ContextSnapshot Domain Entity', () => {
         metadata: '{"db":"true"}',
         tags: 'db,tags',
         timestamp: '2025-10-06T12:00:00.000Z',
+        causality: null,
       };
 
       const snapshot = ContextSnapshot.fromDatabase(dbData);
@@ -195,6 +201,7 @@ describe('ContextSnapshot Domain Entity', () => {
       expect(snapshot.metadata).toBe(dbData.metadata);
       expect(snapshot.tags).toBe(dbData.tags);
       expect(snapshot.timestamp).toBe(dbData.timestamp);
+      expect(snapshot.causality).toBeNull();
     });
 
     it('should handle null metadata from database', () => {
@@ -206,11 +213,13 @@ describe('ContextSnapshot Domain Entity', () => {
         metadata: null,
         tags: 'db,tags',
         timestamp: '2025-10-06T12:00:00.000Z',
+        causality: null,
       };
 
       const snapshot = ContextSnapshot.fromDatabase(dbData);
 
       expect(snapshot.metadata).toBeNull();
+      expect(snapshot.causality).toBeNull();
     });
   });
 

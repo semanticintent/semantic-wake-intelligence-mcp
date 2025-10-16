@@ -1,13 +1,13 @@
-# Semantic Context MCP
+# Wake Intelligence MCP
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/semanticintent/semantic-context-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-context-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-70%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-context-mcp)
+[![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-70%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
 [![Semantic Intent](https://img.shields.io/badge/Pattern-Semantic%20Intent-blue.svg)](https://github.com/semanticintent)
-[![Reference Implementation](https://img.shields.io/badge/Status-Reference%20Implementation-green.svg)](https://github.com/semanticintent/semantic-context-mcp)
+[![Reference Implementation](https://img.shields.io/badge/Status-Reference%20Implementation-green.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![Hexagonal Architecture](https://img.shields.io/badge/Architecture-Hexagonal-purple.svg)](docs/ARCHITECTURE.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant-blue.svg)](CODE_OF_CONDUCT.md)
@@ -53,8 +53,8 @@ Built on research from [Semantic Intent as Single Source of Truth](https://githu
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/semanticintent/semantic-context-mcp.git
-   cd semantic-context-mcp
+   git clone https://github.com/semanticintent/semantic-wake-intelligence-mcp.git
+   cd semantic-wake-intelligence-mcp
    ```
 
 2. **Install dependencies**
@@ -103,7 +103,7 @@ Built on research from [Semantic Intent as Single Source of Truth](https://githu
 npm run deploy
 ```
 
-Your MCP server will be available at: `semantic-context-mcp.<your-account>.workers.dev`
+Your MCP server will be available at: `semantic-wake-intelligence-mcp.<your-account>.workers.dev`
 
 ## 📚 Learning from This Implementation
 
@@ -147,7 +147,7 @@ Update with this configuration:
       "command": "npx",
       "args": [
         "mcp-remote",
-        "http://localhost:8787/sse"  // or semantic-context-mcp.your-account.workers.dev/sse
+        "http://localhost:8787/sse"  // or semantic-wake-intelligence-mcp.your-account.workers.dev/sse
       ]
     }
   }
@@ -402,8 +402,8 @@ We welcome contributions! This is a **reference implementation**, so contributio
 
 ### Community
 
-- 💬 [Discussions](https://github.com/semanticintent/semantic-context-mcp/discussions) - Ask questions
-- 🐛 [Issues](https://github.com/semanticintent/semantic-context-mcp/issues) - Report bugs
+- 💬 [Discussions](https://github.com/semanticintent/semantic-wake-intelligence-mcp/discussions) - Ask questions
+- 🐛 [Issues](https://github.com/semanticintent/semantic-wake-intelligence-mcp/issues) - Report bugs
 - 🔒 [Security](SECURITY.md) - Report vulnerabilities privately
 
 ## 🔒 Security

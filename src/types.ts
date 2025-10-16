@@ -22,6 +22,51 @@ export interface Env {
 }
 
 /**
+ * 🎯 WAKE INTELLIGENCE: Action Types
+ *
+ * Classifies the type of action that created this context.
+ * Part of Layer 1: Causality Engine.
+ *
+ * SEMANTIC CLASSIFICATION:
+ * - conversation: Dialog between human and AI
+ * - decision: Choice made with rationale
+ * - file_edit: Code or document modification
+ * - tool_use: External tool invocation
+ * - research: Information gathering activity
+ */
+export type ActionType = 'conversation' | 'decision' | 'file_edit' | 'tool_use' | 'research';
+
+/**
+ * 🎯 WAKE INTELLIGENCE: Causality Metadata
+ *
+ * Tracks the "WHY" behind context creation (Layer 1: Past).
+ *
+ * CAUSALITY PROPERTIES:
+ * - actionType: Classification of action that created this context
+ * - rationale: Human-readable explanation of WHY this was saved
+ * - dependencies: IDs of prior contexts that influenced this decision
+ * - causedBy: Direct parent context ID (causal chain link)
+ *
+ * PURPOSE:
+ * - Reconstruct decision history
+ * - Build causal chains (root → current)
+ * - Enable "Why did I do this?" queries
+ */
+export interface CausalityMetadata {
+  /** Type of action that created this context */
+  actionType: ActionType;
+
+  /** Human-readable explanation of WHY this context was saved */
+  rationale: string;
+
+  /** IDs of prior snapshots that influenced this context */
+  dependencies: string[];
+
+  /** Direct parent snapshot ID in causal chain (null for root) */
+  causedBy: string | null;
+}
+
+/**
  * 🎯 SEMANTIC DOMAIN MODEL: Context Snapshot
  *
  * Represents a preserved conversation context with AI-enhanced metadata.
@@ -34,6 +79,7 @@ export interface Env {
  * - metadata: Extensible semantic properties (WHAT additional context?)
  * - tags: Semantic categorization markers (HOW to find this?)
  * - timestamp: Temporal semantic anchor (WHEN was this preserved?)
+ * - causality: Causality metadata (WHY was this saved? Layer 1: Past)
  *
  * INTENT PRESERVATION:
  * - Matches database schema semantic contracts
@@ -61,6 +107,9 @@ export interface ContextSnapshot {
 
   /** Temporal semantic anchor - when context was preserved */
   timestamp: string;
+
+  /** Causality metadata - WHY this was saved (Layer 1: Past) */
+  causality: CausalityMetadata | null;
 }
 
 /**
@@ -73,6 +122,7 @@ export interface ContextSnapshot {
  * - content: Required raw content for AI compression
  * - source: Optional provenance (defaults to 'mcp')
  * - metadata: Optional extensible semantics
+ * - causality: Optional causality metadata (Layer 1: Past)
  */
 export interface SaveContextInput {
   /** Semantic domain identifier (required) */
@@ -86,6 +136,9 @@ export interface SaveContextInput {
 
   /** Optional extensible semantic properties */
   metadata?: Record<string, unknown>;
+
+  /** Optional causality metadata for Layer 1 tracking */
+  causality?: CausalityMetadata;
 }
 
 /**
@@ -155,7 +208,7 @@ export function isValidContextSnapshot(obj: unknown): obj is ContextSnapshot {
 
   const snapshot = obj as Record<string, unknown>;
 
-  return (
+  const baseValid = (
     typeof snapshot.id === 'string' &&
     typeof snapshot.project === 'string' &&
     typeof snapshot.summary === 'string' &&
@@ -164,4 +217,18 @@ export function isValidContextSnapshot(obj: unknown): obj is ContextSnapshot {
     typeof snapshot.tags === 'string' &&
     typeof snapshot.timestamp === 'string'
   );
+
+  // Causality is optional, but if present, must be valid
+  if (snapshot.causality !== null && snapshot.causality !== undefined) {
+    const causality = snapshot.causality as Record<string, unknown>;
+    const causalityValid = (
+      typeof causality.actionType === 'string' &&
+      typeof causality.rationale === 'string' &&
+      Array.isArray(causality.dependencies) &&
+      (causality.causedBy === null || typeof causality.causedBy === 'string')
+    );
+    return baseValid && causalityValid;
+  }
+
+  return baseValid;
 }

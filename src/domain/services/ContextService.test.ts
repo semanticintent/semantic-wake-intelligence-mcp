@@ -21,6 +21,8 @@ class MockContextRepository implements IContextRepository {
   save = vi.fn();
   findByProject = vi.fn();
   search = vi.fn();
+  findById = vi.fn();
+  findRecent = vi.fn();
 }
 
 class MockAIProvider implements IAIProvider {
@@ -36,6 +38,10 @@ describe('ContextService Domain Service', () => {
   beforeEach(() => {
     mockRepository = new MockContextRepository();
     mockAIProvider = new MockAIProvider();
+
+    // Default stub for findRecent (used by CausalityService for dependency detection)
+    mockRepository.findRecent.mockResolvedValue([]);
+
     contextService = new ContextService(mockRepository, mockAIProvider);
   });
 
