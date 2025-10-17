@@ -133,4 +133,63 @@ export interface IContextRepository {
    * @returns Contexts in specified tier, ordered oldest first
    */
   findByMemoryTier(memoryTier: string, limit?: number): Promise<ContextSnapshot[]>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update propagation metadata (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Persist prediction results to database
+   *
+   * OBSERVABLE OPERATION:
+   * - Update prediction_score, last_predicted, predicted_next_access, propagation_reason
+   * - Atomic operation
+   * - No side effects
+   *
+   * @param id - Snapshot identifier
+   * @param predictionScore - Composite prediction score (0.0-1.0)
+   * @param lastPredicted - When prediction was calculated (ISO timestamp)
+   * @param predictedNextAccess - Estimated next access time (ISO timestamp)
+   * @param propagationReason - Array of prediction reasons
+   * @returns void
+   */
+  updatePropagation(
+    id: string,
+    predictionScore: number,
+    lastPredicted: string,
+    predictedNextAccess: string | null,
+    propagationReason: string[]
+  ): Promise<void>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find contexts by prediction score (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Retrieve high-value contexts for pre-fetching
+   *
+   * OBSERVABLE QUERY:
+   * - Filter by minimum prediction score
+   * - Order by score DESC (highest first)
+   * - Optional project filter
+   * - Limit results (bounded retrieval)
+   *
+   * @param minScore - Minimum prediction score threshold (0.0-1.0)
+   * @param project - Optional project filter
+   * @param limit - Maximum results
+   * @returns Contexts with prediction score >= minScore, ordered highest first
+   */
+  findByPredictionScore(minScore: number, project?: string, limit?: number): Promise<ContextSnapshot[]>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find stale predictions (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Identify contexts needing re-prediction
+   *
+   * OBSERVABLE QUERY:
+   * - Find contexts with predictions older than threshold
+   * - Order by last_predicted ASC (stalest first)
+   * - Limit results (bounded retrieval)
+   *
+   * @param hoursStale - How many hours before prediction is considered stale
+   * @param limit - Maximum results
+   * @returns Contexts with stale predictions, ordered stalest first
+   */
+  findStalePredictions(hoursStale: number, limit?: number): Promise<ContextSnapshot[]>;
 }

@@ -30,7 +30,8 @@ describe('ContextSnapshot Domain Entity', () => {
           null, // causality
           MemoryTier.ACTIVE, // memoryTier
           null, // lastAccessed
-          0 // accessCount
+          0, // accessCount
+          null // propagation
         );
       }).toThrow('Semantic violation: Project is required (domain anchor missing)');
     });
@@ -48,7 +49,8 @@ describe('ContextSnapshot Domain Entity', () => {
           null, // causality
           MemoryTier.ACTIVE,
           null,
-          0
+                    0,
+          null
         );
       }).toThrow('Semantic violation: Project is required (domain anchor missing)');
     });
@@ -66,7 +68,8 @@ describe('ContextSnapshot Domain Entity', () => {
           null, // causality
           MemoryTier.ACTIVE,
           null,
-          0
+                    0,
+          null
         );
       }).toThrow('Semantic violation: Summary is required (semantic essence missing)');
     });
@@ -84,7 +87,8 @@ describe('ContextSnapshot Domain Entity', () => {
           null, // causality
           MemoryTier.ACTIVE,
           null,
-          0
+                    0,
+          null
         );
       }).toThrow('Semantic violation: Summary is required (semantic essence missing)');
     });
@@ -101,7 +105,8 @@ describe('ContextSnapshot Domain Entity', () => {
         null, // causality
         MemoryTier.ACTIVE,
         null,
-        0
+                  0,
+        null
       );
 
       expect(snapshot.id).toBe('test-id');
@@ -244,6 +249,7 @@ describe('ContextSnapshot Domain Entity', () => {
         memoryTier: MemoryTier.ARCHIVED,
         lastAccessed: '2025-10-10T12:00:00.000Z',
         accessCount: 5,
+        propagation: null,
       };
 
       const snapshot = ContextSnapshot.fromDatabase(dbData);
@@ -274,6 +280,7 @@ describe('ContextSnapshot Domain Entity', () => {
         memoryTier: MemoryTier.RECENT,
         lastAccessed: null,
         accessCount: 0,
+        propagation: null,
       };
 
       const snapshot = ContextSnapshot.fromDatabase(dbData);

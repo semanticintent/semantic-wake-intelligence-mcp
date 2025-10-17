@@ -169,7 +169,8 @@ describe('ToolExecutionHandler', () => {
           null, // causality
           MemoryTier.ACTIVE, // memoryTier
           null, // lastAccessed
-          0 // accessCount
+          0, // accessCount
+          null // propagation
         ),
         new ContextSnapshot(
           'id-2',
@@ -182,7 +183,8 @@ describe('ToolExecutionHandler', () => {
           null, // causality
           MemoryTier.RECENT, // memoryTier
           null, // lastAccessed
-          0 // accessCount
+          0, // accessCount
+          null // propagation
         ),
       ];
 
@@ -236,7 +238,8 @@ describe('ToolExecutionHandler', () => {
           null, // causality
           MemoryTier.ACTIVE, // memoryTier
           null, // lastAccessed
-          0 // accessCount
+          0, // accessCount
+          null // propagation
         ),
       ];
 

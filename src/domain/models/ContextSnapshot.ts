@@ -28,7 +28,7 @@
  * - Layer 2 (Memory Manager): Tracks HOW relevant this is NOW
  */
 
-import type { ContextSnapshot as IContextSnapshot, CausalityMetadata, SaveContextInput, MemoryTier } from '../../types';
+import type { ContextSnapshot as IContextSnapshot, CausalityMetadata, SaveContextInput, MemoryTier, PropagationMetadata } from '../../types';
 import { MemoryTier as MemoryTierEnum } from '../../types';
 
 /**
@@ -51,7 +51,8 @@ export class ContextSnapshot implements IContextSnapshot {
     public readonly causality: CausalityMetadata | null,
     public readonly memoryTier: MemoryTier,
     public readonly lastAccessed: string | null,
-    public readonly accessCount: number
+    public readonly accessCount: number,
+    public readonly propagation: PropagationMetadata | null
   ) {
     this.validate();
   }
@@ -142,7 +143,8 @@ export class ContextSnapshot implements IContextSnapshot {
       data.causality || null, // Layer 1: Causality tracking
       memoryTier, // Layer 2: Memory tier
       null, // Layer 2: Not yet accessed
-      0 // Layer 2: Zero access count
+      0, // Layer 2: Zero access count
+      null // Layer 3: No prediction yet
     );
   }
 
@@ -168,7 +170,8 @@ export class ContextSnapshot implements IContextSnapshot {
       data.causality,
       data.memoryTier,
       data.lastAccessed,
-      data.accessCount
+      data.accessCount,
+      data.propagation
     );
   }
 
@@ -201,7 +204,144 @@ export class ContextSnapshot implements IContextSnapshot {
       this.causality,
       this.memoryTier,
       new Date().toISOString(), // Layer 2: Update last accessed
-      this.accessCount + 1 // Layer 2: Increment access count
+      this.accessCount + 1, // Layer 2: Increment access count
+      this.propagation // Layer 3: Preserve propagation
+    );
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Calculate prediction score (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Predict likelihood of future access based on patterns
+   *
+   * COMPOSITE SCORING:
+   * - 40% Temporal (access patterns over time)
+   * - 30% Causal (position in causal chains)
+   * - 30% Frequency (usage frequency)
+   *
+   * OBSERVABLE ANCHORING:
+   * - All scores derived from timestamps and counts
+   * - Deterministic calculation
+   * - No subjective interpretation
+   *
+   * @param context - Context to score
+   * @param causalStrength - Optional causal chain strength (0.0-1.0)
+   * @returns Composite prediction score (0.0-1.0)
+   */
+  static calculatePropagationScore(
+    context: ContextSnapshot,
+    causalStrength: number = 0.0
+  ): number {
+    // Temporal score: Recent access → higher score
+    const temporalScore = this.calculateTemporalScore(context);
+
+    // Causal score: Part of causal chains → higher score
+    const causalScore = causalStrength; // Passed from causal chain analysis
+
+    // Frequency score: High access count → higher score
+    const frequencyScore = this.calculateFrequencyScore(context);
+
+    // Composite score (weighted average)
+    const composite = (
+      0.4 * temporalScore +
+      0.3 * causalScore +
+      0.3 * frequencyScore
+    );
+
+    // Clamp to [0.0, 1.0]
+    return Math.max(0.0, Math.min(1.0, composite));
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Calculate temporal prediction score
+   *
+   * PURPOSE: Score based on recency and access patterns
+   *
+   * HEURISTICS:
+   * - Recently accessed → high score
+   * - Never accessed → low score
+   * - Regular pattern (every N hours) → boost score
+   *
+   * @param context - Context to score
+   * @returns Temporal score (0.0-1.0)
+   */
+  private static calculateTemporalScore(context: ContextSnapshot): number {
+    if (!context.lastAccessed) {
+      // Never accessed → base score from memory tier
+      switch (context.memoryTier) {
+        case MemoryTierEnum.ACTIVE: return 0.3;
+        case MemoryTierEnum.RECENT: return 0.2;
+        case MemoryTierEnum.ARCHIVED: return 0.1;
+        case MemoryTierEnum.EXPIRED: return 0.0;
+        default: return 0.0;
+      }
+    }
+
+    // Calculate time since last access
+    const now = Date.now();
+    const lastAccessTime = new Date(context.lastAccessed).getTime();
+    const hoursSinceAccess = (now - lastAccessTime) / (1000 * 60 * 60);
+
+    // Decay score over time (inverse exponential)
+    // Recent access (< 1 hour) → score 1.0
+    // 24 hours ago → score ~0.37
+    // 7 days ago → score ~0.0
+    const decayScore = Math.exp(-hoursSinceAccess / 24);
+
+    return decayScore;
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Calculate frequency prediction score
+   *
+   * PURPOSE: Score based on usage frequency
+   *
+   * HEURISTICS:
+   * - High access count → high score
+   * - Logarithmic scaling (10 accesses ≈ 0.5, 100 accesses ≈ 0.75)
+   *
+   * @param context - Context to score
+   * @returns Frequency score (0.0-1.0)
+   */
+  private static calculateFrequencyScore(context: ContextSnapshot): number {
+    if (context.accessCount === 0) return 0.0;
+
+    // Logarithmic scaling: log(accessCount + 1) / log(101)
+    // 0 accesses → 0.0
+    // 10 accesses → ~0.5
+    // 100 accesses → 1.0
+    const score = Math.log(context.accessCount + 1) / Math.log(101);
+
+    return Math.min(1.0, score);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update propagation metadata
+   *
+   * PURPOSE: Create new instance with updated prediction data
+   *
+   * IMMUTABLE PATTERN:
+   * - Returns NEW instance
+   * - Original unchanged
+   * - Preserves all other fields
+   *
+   * @param propagation - New propagation metadata
+   * @returns New ContextSnapshot with updated propagation
+   */
+  updatePropagation(propagation: PropagationMetadata): ContextSnapshot {
+    return new ContextSnapshot(
+      this.id,
+      this.project,
+      this.summary,
+      this.source,
+      this.metadata,
+      this.tags,
+      this.timestamp,
+      this.causality,
+      this.memoryTier,
+      this.lastAccessed,
+      this.accessCount,
+      propagation // Layer 3: Update propagation
     );
   }
 }

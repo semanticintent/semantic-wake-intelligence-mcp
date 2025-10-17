@@ -28,6 +28,9 @@ class MockContextRepository implements IContextRepository {
   updateMemoryTier = vi.fn();
   updateAccessTracking = vi.fn();
   findByMemoryTier = vi.fn();
+  updatePropagation = vi.fn();
+  findByPredictionScore = vi.fn();
+  findStalePredictions = vi.fn();
 }
 
 describe('CausalityService (Layer 1: Past)', () => {
@@ -425,7 +428,8 @@ describe('CausalityService (Layer 1: Past)', () => {
         { actionType: 'research', rationale: 'Start', dependencies: [], causedBy: null },
         MemoryTier.ACTIVE,
         null,
-        0
+                  0,
+        null
       );
 
       const snapshotB = new ContextSnapshot(
@@ -439,7 +443,8 @@ describe('CausalityService (Layer 1: Past)', () => {
         { actionType: 'decision', rationale: 'Follow-up', dependencies: [], causedBy: 'id-a' },
         MemoryTier.ACTIVE,
         null,
-        0
+                  0,
+        null
       );
 
       mockRepo.findById = vi.fn()
@@ -472,7 +477,8 @@ describe('CausalityService (Layer 1: Past)', () => {
         { actionType: 'research', rationale: 'Start', dependencies: [], causedBy: null },
         MemoryTier.ACTIVE,
         null,
-        0
+                  0,
+        null
       );
 
       const snapshotB = new ContextSnapshot(
@@ -486,7 +492,8 @@ describe('CausalityService (Layer 1: Past)', () => {
         { actionType: 'decision', rationale: 'Follow-up', dependencies: [], causedBy: 'id-a' },
         MemoryTier.ACTIVE,
         null,
-        0
+                  0,
+        null
       );
 
       mockRepo.findById = vi.fn()

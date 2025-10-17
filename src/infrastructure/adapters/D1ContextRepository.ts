@@ -40,6 +40,7 @@ export class D1ContextRepository implements IContextRepository {
    *
    * LAYER 1: Deserialize causality metadata
    * LAYER 2: Extract memory tier and LRU tracking fields
+   * LAYER 3: Deserialize propagation prediction metadata
    *
    * @param row - Database row with all columns
    * @returns ContextSnapshot with deserialized metadata
@@ -51,6 +52,15 @@ export class D1ContextRepository implements IContextRepository {
           rationale: row.rationale || '',
           dependencies: row.dependencies ? JSON.parse(row.dependencies) : [],
           causedBy: row.caused_by || null,
+        }
+      : null;
+
+    const propagation = row.prediction_score !== null && row.prediction_score !== undefined
+      ? {
+          predictionScore: row.prediction_score,
+          lastPredicted: row.last_predicted || null,
+          predictedNextAccess: row.predicted_next_access || null,
+          propagationReason: row.propagation_reason ? JSON.parse(row.propagation_reason) : [],
         }
       : null;
 
@@ -67,6 +77,8 @@ export class D1ContextRepository implements IContextRepository {
       memoryTier: row.memory_tier,
       lastAccessed: row.last_accessed,
       accessCount: row.access_count,
+      // Layer 3: Propagation Engine fields
+      propagation,
     };
   }
 
@@ -78,6 +90,7 @@ export class D1ContextRepository implements IContextRepository {
    * - Returns generated ID for immutable reference
    * - Includes causality metadata (Layer 1: Past)
    * - Includes memory tier and LRU fields (Layer 2: Present)
+   * - Includes propagation prediction metadata (Layer 3: Future)
    */
   async save(snapshot: ContextSnapshot): Promise<string> {
     // Serialize causality metadata for storage (Layer 1)
@@ -88,10 +101,18 @@ export class D1ContextRepository implements IContextRepository {
       : null;
     const causedBy = snapshot.causality?.causedBy || null;
 
+    // Serialize propagation metadata for storage (Layer 3)
+    const predictionScore = snapshot.propagation?.predictionScore ?? null;
+    const lastPredicted = snapshot.propagation?.lastPredicted || null;
+    const predictedNextAccess = snapshot.propagation?.predictedNextAccess || null;
+    const propagationReason = snapshot.propagation?.propagationReason
+      ? JSON.stringify(snapshot.propagation.propagationReason)
+      : null;
+
     await this.db.prepare(
       `INSERT INTO context_snapshots
-       (id, project, summary, source, metadata, tags, timestamp, action_type, rationale, dependencies, caused_by, memory_tier, last_accessed, access_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (id, project, summary, source, metadata, tags, timestamp, action_type, rationale, dependencies, caused_by, memory_tier, last_accessed, access_count, prediction_score, last_predicted, predicted_next_access, propagation_reason)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       snapshot.id,
       snapshot.project,
@@ -106,7 +127,11 @@ export class D1ContextRepository implements IContextRepository {
       causedBy,
       snapshot.memoryTier, // Layer 2: Memory tier
       snapshot.lastAccessed, // Layer 2: LRU tracking
-      snapshot.accessCount // Layer 2: Usage frequency
+      snapshot.accessCount, // Layer 2: Usage frequency
+      predictionScore, // Layer 3: Prediction score
+      lastPredicted, // Layer 3: Last prediction time
+      predictedNextAccess, // Layer 3: Predicted access time
+      propagationReason // Layer 3: Prediction reasons
     ).run();
 
     return snapshot.id;
@@ -272,6 +297,95 @@ export class D1ContextRepository implements IContextRepository {
        ORDER BY timestamp ASC
        LIMIT ?`
     ).bind(memoryTier, limit).all();
+
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update propagation metadata (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Persist prediction results to database
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - UPDATE prediction_score, last_predicted, predicted_next_access, propagation_reason
+   * - Atomic operation
+   * - No cascading effects
+   */
+  async updatePropagation(
+    id: string,
+    predictionScore: number,
+    lastPredicted: string,
+    predictedNextAccess: string | null,
+    propagationReason: string[]
+  ): Promise<void> {
+    const reasonJson = JSON.stringify(propagationReason);
+    await this.db.prepare(
+      `UPDATE context_snapshots
+       SET prediction_score = ?,
+           last_predicted = ?,
+           predicted_next_access = ?,
+           propagation_reason = ?
+       WHERE id = ?`
+    ).bind(predictionScore, lastPredicted, predictedNextAccess, reasonJson, id).run();
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find contexts by prediction score (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Retrieve high-value contexts for pre-fetching
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - SELECT WHERE prediction_score >= minScore
+   * - Optional WHERE project = ?
+   * - ORDER BY prediction_score DESC (highest first)
+   * - LIMIT results (bounded retrieval)
+   */
+  async findByPredictionScore(
+    minScore: number,
+    project?: string,
+    limit: number = 10
+  ): Promise<ContextSnapshot[]> {
+    let sql = `SELECT * FROM context_snapshots
+               WHERE prediction_score >= ?`;
+    const params: (string | number)[] = [minScore];
+
+    if (project) {
+      sql += ` AND project = ?`;
+      params.push(project);
+    }
+
+    sql += ` ORDER BY prediction_score DESC LIMIT ?`;
+    params.push(limit);
+
+    const { results } = await this.db.prepare(sql).bind(...params).all();
+
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find stale predictions (Layer 3: Propagation Engine)
+   *
+   * PURPOSE: Identify contexts needing re-prediction
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - Calculate cutoff timestamp (now - hoursStale)
+   * - SELECT WHERE last_predicted < cutoff OR last_predicted IS NULL
+   * - ORDER BY last_predicted ASC (stalest first)
+   * - LIMIT results (bounded retrieval)
+   */
+  async findStalePredictions(hoursStale: number, limit: number = 100): Promise<ContextSnapshot[]> {
+    const cutoffDate = new Date(Date.now() - hoursStale * 60 * 60 * 1000);
+    const cutoffTimestamp = cutoffDate.toISOString();
+
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots
+       WHERE last_predicted IS NULL
+          OR last_predicted < ?
+       ORDER BY last_predicted ASC NULLS FIRST
+       LIMIT ?`
+    ).bind(cutoffTimestamp, limit).all();
 
     if (!results) return [];
     return results.map(row => this.deserializeCausality(row));

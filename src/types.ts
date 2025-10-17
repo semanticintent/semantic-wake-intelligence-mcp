@@ -45,6 +45,41 @@ export enum MemoryTier {
 }
 
 /**
+ * 🎯 WAKE INTELLIGENCE: Propagation Metadata (Layer 3: Future)
+ *
+ * Predicts WHAT contexts will be needed next.
+ *
+ * PROPAGATION PROPERTIES:
+ * - predictionScore: 0.0-1.0 likelihood of future access (composite score)
+ * - lastPredicted: When prediction was last calculated
+ * - predictedNextAccess: Estimated next access time (ISO string)
+ * - propagationReason: Why this was predicted (e.g., ["causal_chain", "temporal_pattern"])
+ *
+ * PREDICTION FACTORS:
+ * - Temporal: Access patterns over time (every N hours, time-of-day)
+ * - Causal: Follows from causal chains (A → B → C)
+ * - Frequency: Usage frequency (high accessCount = high score)
+ *
+ * OBSERVABLE ANCHORING:
+ * - All predictions based on historical access data
+ * - Scores calculated from timestamps and counts
+ * - No subjective interpretation
+ */
+export interface PropagationMetadata {
+  /** Composite prediction score (0.0-1.0) */
+  predictionScore: number;
+
+  /** When prediction was last calculated (ISO timestamp) */
+  lastPredicted: string | null;
+
+  /** Estimated next access time (ISO timestamp) */
+  predictedNextAccess: string | null;
+
+  /** Reasons for prediction (e.g., ["causal_chain", "high_frequency"]) */
+  propagationReason: string[];
+}
+
+/**
  * 🎯 WAKE INTELLIGENCE: Action Types
  *
  * Classifies the type of action that created this context.
@@ -106,6 +141,7 @@ export interface CausalityMetadata {
  * - memoryTier: Classification by temporal relevance (Layer 2: Present)
  * - lastAccessed: When context was last retrieved (Layer 2: LRU tracking)
  * - accessCount: Number of times accessed (Layer 2: Usage frequency)
+ * - propagation: Prediction metadata (WHAT will be needed next? Layer 3: Future)
  *
  * INTENT PRESERVATION:
  * - Matches database schema semantic contracts
@@ -145,6 +181,9 @@ export interface ContextSnapshot {
 
   /** Number of times this context was accessed (Layer 2: Present) */
   accessCount: number;
+
+  /** Propagation metadata - WHAT will be needed next (Layer 3: Future) */
+  propagation: PropagationMetadata | null;
 }
 
 /**
@@ -265,7 +304,19 @@ export function isValidContextSnapshot(obj: unknown): obj is ContextSnapshot {
       Array.isArray(causality.dependencies) &&
       (causality.causedBy === null || typeof causality.causedBy === 'string')
     );
-    return baseValid && causalityValid;
+    if (!causalityValid) return false;
+  }
+
+  // Propagation is optional, but if present, must be valid
+  if (snapshot.propagation !== null && snapshot.propagation !== undefined) {
+    const propagation = snapshot.propagation as Record<string, unknown>;
+    const propagationValid = (
+      typeof propagation.predictionScore === 'number' &&
+      (propagation.lastPredicted === null || typeof propagation.lastPredicted === 'string') &&
+      (propagation.predictedNextAccess === null || typeof propagation.predictedNextAccess === 'string') &&
+      Array.isArray(propagation.propagationReason)
+    );
+    if (!propagationValid) return false;
   }
 
   return baseValid;

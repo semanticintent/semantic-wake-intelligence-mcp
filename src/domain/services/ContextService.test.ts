@@ -26,6 +26,9 @@ class MockContextRepository implements IContextRepository {
   updateMemoryTier = vi.fn();
   updateAccessTracking = vi.fn();
   findByMemoryTier = vi.fn();
+  updatePropagation = vi.fn();
+  findByPredictionScore = vi.fn();
+  findStalePredictions = vi.fn();
 }
 
 class MockAIProvider implements IAIProvider {

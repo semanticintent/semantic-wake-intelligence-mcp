@@ -8,7 +8,7 @@
  * - Enforces business rules
  * - Maintains semantic integrity through transformations
  * - Pure business logic (no infrastructure dependencies)
- * - Integrates Layer 1 (Causality Engine) for temporal intelligence
+ * - Integrates Wake Intelligence 3-layer brain architecture
  *
  * SEMANTIC ANCHORING:
  * - WHAT: Core business operations (save, load, search)
@@ -16,9 +16,17 @@
  * - HOW: Coordinate domain entities + infrastructure ports
  *
  * WAKE INTELLIGENCE INTEGRATION:
- * - Layer 1 (Causality): Track WHY contexts are saved
- * - Auto-detect dependencies from temporal proximity
- * - Build causal chains for decision reconstruction
+ * - Layer 1 (Causality Engine): Track WHY contexts are saved
+ *   - Auto-detect dependencies from temporal proximity
+ *   - Build causal chains for decision reconstruction
+ * - Layer 2 (Memory Manager): Track HOW relevant contexts are NOW
+ *   - Classify by temporal relevance (ACTIVE, RECENT, ARCHIVED, EXPIRED)
+ *   - LRU tracking for access patterns
+ *   - Automatic pruning of expired contexts
+ * - Layer 3 (Propagation Engine): Predict WHAT will be needed next
+ *   - Composite scoring (temporal + causal + frequency)
+ *   - Proactive pre-fetching optimization
+ *   - Pattern-based prediction
  *
  * DEPENDENCY INVERSION:
  * - Depends on abstractions (IContextRepository, IAIProvider)
@@ -31,6 +39,7 @@ import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../
 import { ContextSnapshot } from '../models/ContextSnapshot';
 import { CausalityService } from './CausalityService';
 import { MemoryManagerService } from './MemoryManagerService';
+import { PropagationService } from './PropagationService';
 
 /**
  * Domain service for context management operations.
@@ -39,10 +48,12 @@ import { MemoryManagerService } from './MemoryManagerService';
  * - AI Enhancement → Causality Tracking → Domain Validation → Persistence
  * - Maintains semantic intent through each step
  * - Integrates Layer 2 (Memory Manager) for temporal relevance
+ * - Integrates Layer 3 (Propagation Engine) for future prediction
  */
 export class ContextService {
   private readonly causalityService: CausalityService;
   private readonly memoryManager: MemoryManagerService;
+  private readonly propagationEngine: PropagationService;
 
   constructor(
     private readonly repository: IContextRepository,
@@ -52,6 +63,8 @@ export class ContextService {
     this.causalityService = new CausalityService(repository);
     // Initialize Layer 2: Memory Manager
     this.memoryManager = new MemoryManagerService(repository);
+    // Initialize Layer 3: Propagation Engine
+    this.propagationEngine = new PropagationService(repository, this.causalityService);
   }
 
   /**
@@ -243,5 +256,76 @@ export class ContextService {
    */
   async pruneExpiredContexts(limit?: number) {
     return await this.memoryManager.pruneExpiredContexts(limit);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update predictions for project (Layer 3)
+   *
+   * PURPOSE: Refresh predictions for all contexts in a project
+   *
+   * LAYER 3 INTEGRATION:
+   * - Recalculates prediction scores
+   * - Updates propagation metadata
+   * - Enables pre-fetching optimization
+   *
+   * @param project - Project to update predictions for
+   * @param staleThreshold - Hours before prediction is stale (default: 24)
+   * @returns Number of contexts updated
+   */
+  async updatePredictions(project: string, staleThreshold?: number) {
+    return await this.propagationEngine.updateProjectPredictions(project, staleThreshold);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Get high-value contexts for pre-fetching (Layer 3)
+   *
+   * PURPOSE: Retrieve contexts most likely to be accessed soon
+   *
+   * USE CASE:
+   * - Pre-fetch these contexts for faster retrieval
+   * - Cache them in memory
+   * - Prioritize in query results
+   *
+   * @param project - Project to search within
+   * @param minScore - Minimum prediction score (default: 0.6)
+   * @param limit - Maximum contexts (default: 10)
+   * @returns High-value contexts ordered by prediction score
+   */
+  async getHighValueContexts(project: string, minScore?: number, limit?: number) {
+    return await this.propagationEngine.getHighValueContexts(project, minScore, limit);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Get propagation statistics for project (Layer 3)
+   *
+   * PURPOSE: Analytics on prediction quality and patterns
+   *
+   * @param project - Project to analyze
+   * @returns Statistics on prediction scores, reasons, accuracy
+   */
+  async getPropagationStats(project: string) {
+    // Get high-value contexts
+    const highValue = await this.repository.findByPredictionScore(0.6, project, 100);
+
+    // Calculate statistics
+    const totalPredicted = highValue.filter(c => c.propagation !== null).length;
+    const avgScore = totalPredicted > 0
+      ? highValue.reduce((sum, c) => sum + (c.propagation?.predictionScore || 0), 0) / totalPredicted
+      : 0;
+
+    // Count reason frequencies
+    const reasonCounts: Record<string, number> = {};
+    highValue.forEach(c => {
+      c.propagation?.propagationReason.forEach(reason => {
+        reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+      });
+    });
+
+    return {
+      totalContexts: highValue.length,
+      totalPredicted,
+      averagePredictionScore: avgScore,
+      reasonFrequency: reasonCounts,
+    };
   }
 }
