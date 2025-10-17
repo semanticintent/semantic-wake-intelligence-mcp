@@ -77,8 +77,11 @@ describe('D1ContextRepository', () => {
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining('memory_tier, last_accessed, access_count')
       );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('prediction_score, last_predicted, predicted_next_access, propagation_reason')
+      );
 
-      // Expect 14 parameters (7 original + 4 causality + 3 memory)
+      // Expect 18 parameters (7 original + 4 causality + 3 memory + 4 propagation)
       expect(bindSpy).toHaveBeenCalledWith(
         snapshot.id,
         snapshot.project,
@@ -93,7 +96,11 @@ describe('D1ContextRepository', () => {
         null, // caused_by
         snapshot.memoryTier, // memory_tier (Layer 2)
         snapshot.lastAccessed, // last_accessed (Layer 2)
-        snapshot.accessCount // access_count (Layer 2)
+        snapshot.accessCount, // access_count (Layer 2)
+        null, // prediction_score (Layer 3)
+        null, // last_predicted (Layer 3)
+        null, // predicted_next_access (Layer 3)
+        null  // propagation_reason (Layer 3)
       );
 
       expect(runSpy).toHaveBeenCalled();
