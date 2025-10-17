@@ -29,6 +29,9 @@ import type { ContextSnapshot } from '../../types';
  * - search: Find by semantic meaning (summary + tags)
  * - findById: Retrieve single snapshot by ID (Layer 1: Causality)
  * - findRecent: Find contexts within time window (Layer 1: Dependency detection)
+ * - updateMemoryTier: Update tier classification (Layer 2: Memory Manager)
+ * - updateAccessTracking: Update LRU metadata (Layer 2: Memory Manager)
+ * - findByMemoryTier: Find contexts by tier (Layer 2: Memory Manager)
  */
 export interface IContextRepository {
   /**
@@ -83,4 +86,51 @@ export interface IContextRepository {
    * @returns Recent contexts ordered newest first
    */
   findRecent(project: string, beforeTimestamp: string, hoursBack: number): Promise<ContextSnapshot[]>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update memory tier (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Reclassify snapshot based on current age
+   *
+   * OBSERVABLE OPERATION:
+   * - Calculate tier from timestamp
+   * - Update database row
+   * - No side effects
+   *
+   * @param id - Snapshot identifier
+   * @param memoryTier - New tier classification
+   * @returns void
+   */
+  updateMemoryTier(id: string, memoryTier: string): Promise<void>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update access tracking (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Track LRU metadata when context is accessed
+   *
+   * OBSERVABLE OPERATION:
+   * - Update last_accessed to current timestamp
+   * - Increment access_count by 1
+   * - No side effects
+   *
+   * @param id - Snapshot identifier
+   * @returns void
+   */
+  updateAccessTracking(id: string): Promise<void>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find contexts by memory tier (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Enable tier-based queries (e.g., find EXPIRED for pruning)
+   *
+   * OBSERVABLE QUERY:
+   * - Filter by memory tier
+   * - Order by timestamp (oldest first for pruning)
+   * - Limit results (bounded retrieval)
+   *
+   * @param memoryTier - Tier to filter by
+   * @param limit - Maximum results
+   * @returns Contexts in specified tier, ordered oldest first
+   */
+  findByMemoryTier(memoryTier: string, limit?: number): Promise<ContextSnapshot[]>;
 }

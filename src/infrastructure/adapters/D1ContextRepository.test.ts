@@ -74,8 +74,11 @@ describe('D1ContextRepository', () => {
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining('action_type, rationale, dependencies, caused_by')
       );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('memory_tier, last_accessed, access_count')
+      );
 
-      // Expect 11 parameters (7 original + 4 causality)
+      // Expect 14 parameters (7 original + 4 causality + 3 memory)
       expect(bindSpy).toHaveBeenCalledWith(
         snapshot.id,
         snapshot.project,
@@ -87,7 +90,10 @@ describe('D1ContextRepository', () => {
         null, // action_type
         null, // rationale
         null, // dependencies
-        null  // caused_by
+        null, // caused_by
+        snapshot.memoryTier, // memory_tier (Layer 2)
+        snapshot.lastAccessed, // last_accessed (Layer 2)
+        snapshot.accessCount // access_count (Layer 2)
       );
 
       expect(runSpy).toHaveBeenCalled();
@@ -268,6 +274,144 @@ describe('D1ContextRepository', () => {
       expect(results).toHaveLength(1);
       expect(results[0].id).toBe('result-1');
       expect(results[0].summary).toBe('Summary with search term');
+    });
+  });
+
+  describe('Layer 2: Memory Manager Methods', () => {
+    describe('updateMemoryTier()', () => {
+      it('should execute UPDATE statement with tier and id', async () => {
+        // Arrange
+        const id = 'snapshot-123';
+        const tier = 'archived';
+
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        const runSpy = vi.spyOn(mockStatement, 'run');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        // Act
+        await repository.updateMemoryTier(id, tier);
+
+        // Assert
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('UPDATE context_snapshots')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('SET memory_tier = ?')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('WHERE id = ?')
+        );
+        expect(bindSpy).toHaveBeenCalledWith(tier, id);
+        expect(runSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe('updateAccessTracking()', () => {
+      it('should execute UPDATE with timestamp and increment count', async () => {
+        // Arrange
+        const id = 'snapshot-123';
+
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        const runSpy = vi.spyOn(mockStatement, 'run');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        // Act
+        await repository.updateAccessTracking(id);
+
+        // Assert
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('UPDATE context_snapshots')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('SET last_accessed = ?')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('access_count = access_count + 1')
+        );
+        expect(bindSpy).toHaveBeenCalledWith(
+          expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/), // ISO timestamp
+          id
+        );
+        expect(runSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe('findByMemoryTier()', () => {
+      it('should query by tier with default limit', async () => {
+        // Arrange
+        const tier = 'expired';
+
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        // Act
+        await repository.findByMemoryTier(tier);
+
+        // Assert
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('WHERE memory_tier = ?')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('ORDER BY timestamp ASC')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('LIMIT ?')
+        );
+        expect(bindSpy).toHaveBeenCalledWith(tier, 100);
+      });
+
+      it('should query by tier with custom limit', async () => {
+        // Arrange
+        const tier = 'active';
+        const limit = 50;
+
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        // Act
+        await repository.findByMemoryTier(tier, limit);
+
+        // Assert
+        expect(bindSpy).toHaveBeenCalledWith(tier, limit);
+      });
+
+      it('should transform tier query results', async () => {
+        // Arrange
+        const mockResults = [
+          {
+            id: 'old-1',
+            project: 'test',
+            summary: 'Old context',
+            source: 'mcp',
+            metadata: null,
+            tags: 'old',
+            timestamp: '2024-01-01T12:00:00.000Z',
+            action_type: null,
+            rationale: null,
+            dependencies: null,
+            caused_by: null,
+            memory_tier: 'expired',
+            last_accessed: null,
+            access_count: 0,
+          },
+        ];
+
+        const mockStatement = new MockD1PreparedStatement();
+        vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: mockResults });
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        // Act
+        const results = await repository.findByMemoryTier('expired');
+
+        // Assert
+        expect(results).toHaveLength(1);
+        expect(results[0].id).toBe('old-1');
+        expect(results[0].memoryTier).toBe('expired');
+      });
     });
   });
 });

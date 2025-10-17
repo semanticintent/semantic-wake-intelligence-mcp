@@ -34,12 +34,15 @@ export class D1ContextRepository implements IContextRepository {
   constructor(private readonly db: D1Database) {}
 
   /**
-   * 🎯 WAKE INTELLIGENCE: Deserialize causality metadata from database row
+   * 🎯 WAKE INTELLIGENCE: Deserialize database row to ContextSnapshot
    *
-   * PURPOSE: Convert stored JSON strings back to CausalityMetadata object
+   * PURPOSE: Convert stored JSON strings back to typed objects
    *
-   * @param row - Database row with causality columns
-   * @returns ContextSnapshot with deserialized causality
+   * LAYER 1: Deserialize causality metadata
+   * LAYER 2: Extract memory tier and LRU tracking fields
+   *
+   * @param row - Database row with all columns
+   * @returns ContextSnapshot with deserialized metadata
    */
   private deserializeCausality(row: any): ContextSnapshot {
     const causality = row.action_type
@@ -60,6 +63,10 @@ export class D1ContextRepository implements IContextRepository {
       tags: row.tags,
       timestamp: row.timestamp,
       causality,
+      // Layer 2: Memory Manager fields
+      memoryTier: row.memory_tier,
+      lastAccessed: row.last_accessed,
+      accessCount: row.access_count,
     };
   }
 
@@ -70,9 +77,10 @@ export class D1ContextRepository implements IContextRepository {
    * - INSERT INTO context_snapshots
    * - Returns generated ID for immutable reference
    * - Includes causality metadata (Layer 1: Past)
+   * - Includes memory tier and LRU fields (Layer 2: Present)
    */
   async save(snapshot: ContextSnapshot): Promise<string> {
-    // Serialize causality metadata for storage
+    // Serialize causality metadata for storage (Layer 1)
     const actionType = snapshot.causality?.actionType || null;
     const rationale = snapshot.causality?.rationale || null;
     const dependencies = snapshot.causality?.dependencies
@@ -82,8 +90,8 @@ export class D1ContextRepository implements IContextRepository {
 
     await this.db.prepare(
       `INSERT INTO context_snapshots
-       (id, project, summary, source, metadata, tags, timestamp, action_type, rationale, dependencies, caused_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (id, project, summary, source, metadata, tags, timestamp, action_type, rationale, dependencies, caused_by, memory_tier, last_accessed, access_count)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       snapshot.id,
       snapshot.project,
@@ -95,7 +103,10 @@ export class D1ContextRepository implements IContextRepository {
       actionType,
       rationale,
       dependencies,
-      causedBy
+      causedBy,
+      snapshot.memoryTier, // Layer 2: Memory tier
+      snapshot.lastAccessed, // Layer 2: LRU tracking
+      snapshot.accessCount // Layer 2: Usage frequency
     ).run();
 
     return snapshot.id;
@@ -201,6 +212,66 @@ export class D1ContextRepository implements IContextRepository {
     sql += ` ORDER BY timestamp DESC LIMIT 10`;
 
     const { results } = await this.db.prepare(sql).bind(...params).all();
+
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update memory tier (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Reclassify snapshot based on current age
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - UPDATE memory_tier WHERE id = ?
+   * - No cascading effects
+   * - Atomic operation
+   */
+  async updateMemoryTier(id: string, memoryTier: string): Promise<void> {
+    await this.db.prepare(
+      `UPDATE context_snapshots
+       SET memory_tier = ?
+       WHERE id = ?`
+    ).bind(memoryTier, id).run();
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Update access tracking (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Track LRU metadata when context is accessed
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - UPDATE last_accessed = current timestamp
+   * - INCREMENT access_count by 1
+   * - Atomic operation
+   */
+  async updateAccessTracking(id: string): Promise<void> {
+    const now = new Date().toISOString();
+    await this.db.prepare(
+      `UPDATE context_snapshots
+       SET last_accessed = ?,
+           access_count = access_count + 1
+       WHERE id = ?`
+    ).bind(now, id).run();
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find contexts by memory tier (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Enable tier-based queries (e.g., find EXPIRED for pruning)
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - SELECT WHERE memory_tier = ?
+   * - ORDER BY timestamp ASC (oldest first for pruning)
+   * - LIMIT results (bounded retrieval)
+   */
+  async findByMemoryTier(memoryTier: string, limit: number = 100): Promise<ContextSnapshot[]> {
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots
+       WHERE memory_tier = ?
+       ORDER BY timestamp ASC
+       LIMIT ?`
+    ).bind(memoryTier, limit).all();
 
     if (!results) return [];
     return results.map(row => this.deserializeCausality(row));

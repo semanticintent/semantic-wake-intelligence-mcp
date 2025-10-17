@@ -30,6 +30,7 @@ import type { IAIProvider } from '../../application/ports/IAIProvider';
 import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
 import { ContextSnapshot } from '../models/ContextSnapshot';
 import { CausalityService } from './CausalityService';
+import { MemoryManagerService } from './MemoryManagerService';
 
 /**
  * Domain service for context management operations.
@@ -37,9 +38,11 @@ import { CausalityService } from './CausalityService';
  * ORCHESTRATION:
  * - AI Enhancement → Causality Tracking → Domain Validation → Persistence
  * - Maintains semantic intent through each step
+ * - Integrates Layer 2 (Memory Manager) for temporal relevance
  */
 export class ContextService {
   private readonly causalityService: CausalityService;
+  private readonly memoryManager: MemoryManagerService;
 
   constructor(
     private readonly repository: IContextRepository,
@@ -47,6 +50,8 @@ export class ContextService {
   ) {
     // Initialize Layer 1: Causality Engine
     this.causalityService = new CausalityService(repository);
+    // Initialize Layer 2: Memory Manager
+    this.memoryManager = new MemoryManagerService(repository);
   }
 
   /**
@@ -107,6 +112,10 @@ export class ContextService {
    * - Limit bounded to prevent resource exhaustion (max 10)
    * - Results ordered by temporal semantic relevance (newest first)
    *
+   * LAYER 2 INTEGRATION:
+   * - Automatically tracks access when contexts are retrieved
+   * - Updates last_accessed timestamp and access_count
+   *
    * @param input - Project filter and result limit
    * @returns Contexts ordered by timestamp DESC
    */
@@ -115,6 +124,14 @@ export class ContextService {
     const boundedLimit = Math.min(input.limit || 1, 10);
 
     const results = await this.repository.findByProject(input.project, boundedLimit);
+
+    // Layer 2: Track access for each retrieved context
+    // Fire-and-forget (don't await) to avoid blocking response
+    results.forEach(r => {
+      this.memoryManager.trackAccess(r.id).catch(err => {
+        console.error(`Failed to track access for ${r.id}:`, err);
+      });
+    });
 
     return results.map(r => ContextSnapshot.fromDatabase(r));
   }
@@ -127,11 +144,23 @@ export class ContextService {
    * - Matches against tags (categorization markers)
    * - Optional project scoping (domain filter)
    *
+   * LAYER 2 INTEGRATION:
+   * - Automatically tracks access for search results
+   * - Updates last_accessed timestamp and access_count
+   *
    * @param input - Search query and optional project filter
    * @returns Contexts matching semantic meaning
    */
   async searchContext(input: SearchContextInput): Promise<ContextSnapshot[]> {
     const results = await this.repository.search(input.query, input.project);
+
+    // Layer 2: Track access for each search result
+    // Fire-and-forget (don't await) to avoid blocking response
+    results.forEach(r => {
+      this.memoryManager.trackAccess(r.id).catch(err => {
+        console.error(`Failed to track access for ${r.id}:`, err);
+      });
+    });
 
     return results.map(r => ContextSnapshot.fromDatabase(r));
   }
@@ -141,10 +170,18 @@ export class ContextService {
    *
    * PURPOSE: Answer "Why did I do this?"
    *
+   * LAYER 2 INTEGRATION:
+   * - Tracks access when reasoning is reconstructed
+   *
    * @param snapshotId - ID of snapshot to explain
    * @returns Human-readable reasoning with causal context
    */
   async reconstructReasoning(snapshotId: string): Promise<string> {
+    // Layer 2: Track access (fire-and-forget)
+    this.memoryManager.trackAccess(snapshotId).catch(err => {
+      console.error(`Failed to track access for ${snapshotId}:`, err);
+    });
+
     return await this.causalityService.reconstructReasoning(snapshotId);
   }
 
@@ -170,5 +207,41 @@ export class ContextService {
    */
   async getCausalityStats(project: string) {
     return await this.causalityService.getCausalityStats(project);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Get memory statistics for project (Layer 2)
+   *
+   * PURPOSE: Analytics on memory tier distribution
+   *
+   * @param project - Project to analyze
+   * @returns Statistics on memory tier distribution
+   */
+  async getMemoryStats(project: string) {
+    return await this.memoryManager.getMemoryStats(project);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Recalculate memory tiers (Layer 2)
+   *
+   * PURPOSE: Update stale tier classifications based on current time
+   *
+   * @param project - Optional project filter
+   * @returns Number of contexts updated
+   */
+  async recalculateMemoryTiers(project?: string) {
+    return await this.memoryManager.recalculateAllTiers(project);
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Prune expired contexts (Layer 2)
+   *
+   * PURPOSE: Automatic cleanup of old, unused contexts
+   *
+   * @param limit - Maximum contexts to prune
+   * @returns Number of contexts deleted
+   */
+  async pruneExpiredContexts(limit?: number) {
+    return await this.memoryManager.pruneExpiredContexts(limit);
   }
 }

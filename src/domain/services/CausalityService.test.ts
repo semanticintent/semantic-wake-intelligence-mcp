@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CausalityService } from './CausalityService';
 import { ContextSnapshot } from '../models/ContextSnapshot';
+import { MemoryTier } from '../../types';
 import type { IContextRepository } from '../../application/ports/IContextRepository';
 import type { ActionType } from '../../types';
 
@@ -24,6 +25,9 @@ class MockContextRepository implements IContextRepository {
   findRecent = vi.fn();
   findByProject = vi.fn();
   search = vi.fn();
+  updateMemoryTier = vi.fn();
+  updateAccessTracking = vi.fn();
+  findByMemoryTier = vi.fn();
 }
 
 describe('CausalityService (Layer 1: Past)', () => {
@@ -418,7 +422,10 @@ describe('CausalityService (Layer 1: Past)', () => {
         null,
         'test',
         earlier.toISOString(),
-        { actionType: 'research', rationale: 'Start', dependencies: [], causedBy: null }
+        { actionType: 'research', rationale: 'Start', dependencies: [], causedBy: null },
+        MemoryTier.ACTIVE,
+        null,
+        0
       );
 
       const snapshotB = new ContextSnapshot(
@@ -429,7 +436,10 @@ describe('CausalityService (Layer 1: Past)', () => {
         null,
         'test',
         now.toISOString(),
-        { actionType: 'decision', rationale: 'Follow-up', dependencies: [], causedBy: 'id-a' }
+        { actionType: 'decision', rationale: 'Follow-up', dependencies: [], causedBy: 'id-a' },
+        MemoryTier.ACTIVE,
+        null,
+        0
       );
 
       mockRepo.findById = vi.fn()
@@ -459,7 +469,10 @@ describe('CausalityService (Layer 1: Past)', () => {
         null,
         'test',
         later.toISOString(),
-        { actionType: 'research', rationale: 'Start', dependencies: [], causedBy: null }
+        { actionType: 'research', rationale: 'Start', dependencies: [], causedBy: null },
+        MemoryTier.ACTIVE,
+        null,
+        0
       );
 
       const snapshotB = new ContextSnapshot(
@@ -470,7 +483,10 @@ describe('CausalityService (Layer 1: Past)', () => {
         null,
         'test',
         now.toISOString(),
-        { actionType: 'decision', rationale: 'Follow-up', dependencies: [], causedBy: 'id-a' }
+        { actionType: 'decision', rationale: 'Follow-up', dependencies: [], causedBy: 'id-a' },
+        MemoryTier.ACTIVE,
+        null,
+        0
       );
 
       mockRepo.findById = vi.fn()

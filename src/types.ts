@@ -22,6 +22,29 @@ export interface Env {
 }
 
 /**
+ * 🎯 WAKE INTELLIGENCE: Memory Tier Classification
+ *
+ * Classifies contexts by temporal relevance (Layer 2: Memory Manager).
+ *
+ * MEMORY TIERS (based on age since creation):
+ * - ACTIVE: Last 1 hour - highest priority, frequently accessed
+ * - RECENT: 1-24 hours - moderate priority, recent work
+ * - ARCHIVED: 1-30 days - low priority, historical reference
+ * - EXPIRED: > 30 days - candidate for automatic pruning
+ *
+ * OBSERVABLE ANCHORING:
+ * - All tier decisions based solely on timestamp comparison
+ * - Deterministic classification (same timestamp → same tier)
+ * - No subjective interpretation required
+ */
+export enum MemoryTier {
+  ACTIVE = 'active',
+  RECENT = 'recent',
+  ARCHIVED = 'archived',
+  EXPIRED = 'expired',
+}
+
+/**
  * 🎯 WAKE INTELLIGENCE: Action Types
  *
  * Classifies the type of action that created this context.
@@ -80,6 +103,9 @@ export interface CausalityMetadata {
  * - tags: Semantic categorization markers (HOW to find this?)
  * - timestamp: Temporal semantic anchor (WHEN was this preserved?)
  * - causality: Causality metadata (WHY was this saved? Layer 1: Past)
+ * - memoryTier: Classification by temporal relevance (Layer 2: Present)
+ * - lastAccessed: When context was last retrieved (Layer 2: LRU tracking)
+ * - accessCount: Number of times accessed (Layer 2: Usage frequency)
  *
  * INTENT PRESERVATION:
  * - Matches database schema semantic contracts
@@ -110,6 +136,15 @@ export interface ContextSnapshot {
 
   /** Causality metadata - WHY this was saved (Layer 1: Past) */
   causality: CausalityMetadata | null;
+
+  /** Memory tier classification based on age (Layer 2: Present) */
+  memoryTier: MemoryTier;
+
+  /** Last accessed timestamp for LRU tracking (Layer 2: Present) */
+  lastAccessed: string | null;
+
+  /** Number of times this context was accessed (Layer 2: Present) */
+  accessCount: number;
 }
 
 /**
@@ -215,7 +250,10 @@ export function isValidContextSnapshot(obj: unknown): obj is ContextSnapshot {
     typeof snapshot.source === 'string' &&
     (snapshot.metadata === null || typeof snapshot.metadata === 'string') &&
     typeof snapshot.tags === 'string' &&
-    typeof snapshot.timestamp === 'string'
+    typeof snapshot.timestamp === 'string' &&
+    typeof snapshot.memoryTier === 'string' &&
+    (snapshot.lastAccessed === null || typeof snapshot.lastAccessed === 'string') &&
+    typeof snapshot.accessCount === 'number'
   );
 
   // Causality is optional, but if present, must be valid

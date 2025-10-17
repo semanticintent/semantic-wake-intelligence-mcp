@@ -14,6 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ToolExecutionHandler } from './ToolExecutionHandler';
 import type { ContextService } from '../../domain/services/ContextService';
 import { ContextSnapshot } from '../../domain/models/ContextSnapshot';
+import { MemoryTier } from '../../types';
 import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
 
 // Mock ContextService
@@ -165,7 +166,10 @@ describe('ToolExecutionHandler', () => {
           null,
           'tag1',
           '2025-10-06T12:00:00.000Z',
-          null // causality
+          null, // causality
+          MemoryTier.ACTIVE, // memoryTier
+          null, // lastAccessed
+          0 // accessCount
         ),
         new ContextSnapshot(
           'id-2',
@@ -175,7 +179,10 @@ describe('ToolExecutionHandler', () => {
           null,
           'tag2',
           '2025-10-06T11:00:00.000Z',
-          null // causality
+          null, // causality
+          MemoryTier.RECENT, // memoryTier
+          null, // lastAccessed
+          0 // accessCount
         ),
       ];
 
@@ -226,7 +233,10 @@ describe('ToolExecutionHandler', () => {
           null,
           'feature,important',
           '2025-10-06T12:00:00.000Z',
-          null // causality
+          null, // causality
+          MemoryTier.ACTIVE, // memoryTier
+          null, // lastAccessed
+          0 // accessCount
         ),
       ];
 
