@@ -12,12 +12,15 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant-blue.svg)](CODE_OF_CONDUCT.md)
 
-> **Reference implementation of Semantic Intent as Single Source of Truth patterns**
+> **Wake Intelligence: 3-Layer Temporal Intelligence for AI Agents**
 >
-> A Model Context Protocol (MCP) server demonstrating semantic anchoring, intent preservation, and observable property patterns for AI-assisted development.
+> A production-ready Model Context Protocol (MCP) server implementing a temporal intelligence "brain" with three layers: **Past** (causality tracking), **Present** (memory management), and **Future** (predictive pre-fetching).
+>
+> Reference implementation of Semantic Intent as Single Source of Truth patterns with hexagonal architecture.
 
 ## 📚 Table of Contents
 
+- [Wake Intelligence Brain Architecture](#-wake-intelligence-brain-architecture)
 - [What Makes This Different](#-what-makes-this-different)
 - [Quick Start](#-quick-start)
 - [Architecture](#-architecture)
@@ -27,6 +30,104 @@
 - [Contributing](#-contributing)
 - [Security](#-security)
 - [License](#license)
+
+## 🧠 Wake Intelligence Brain Architecture
+
+Wake Intelligence implements a **3-layer temporal intelligence system** that learns from the past, manages the present, and predicts the future:
+
+### **Layer 1: Causality Engine (Past - WHY)**
+Tracks **WHY** contexts were created and their causal relationships.
+
+**Features:**
+- ✅ Causal chain tracking (what led to what)
+- ✅ Dependency auto-detection from temporal proximity
+- ✅ Reasoning reconstruction ("Why did I do this?")
+- ✅ Action type taxonomy (decision, implementation, refactor, etc.)
+
+**Use Cases:**
+- Trace decision history backwards through time
+- Understand why a context was created
+- Identify context dependencies automatically
+- Reconstruct reasoning from past sessions
+
+### **Layer 2: Memory Manager (Present - HOW)**
+Manages **HOW** relevant contexts are right now based on temporal patterns.
+
+**Features:**
+- ✅ 4-tier memory classification (ACTIVE, RECENT, ARCHIVED, EXPIRED)
+- ✅ LRU tracking (last access time + access count)
+- ✅ Automatic tier recalculation based on age
+- ✅ Expired context pruning
+
+**Memory Tiers:**
+- **ACTIVE**: Last accessed < 1 hour ago
+- **RECENT**: Last accessed 1-24 hours ago
+- **ARCHIVED**: Last accessed 1-30 days ago
+- **EXPIRED**: Last accessed > 30 days ago
+
+**Use Cases:**
+- Prioritize recent contexts in search results
+- Automatically archive old contexts
+- Prune expired contexts to save storage
+- Track context access patterns
+
+### **Layer 3: Propagation Engine (Future - WHAT)**
+Predicts **WHAT** contexts will be needed next for proactive optimization.
+
+**Features:**
+- ✅ Composite prediction scoring (40% temporal + 30% causal + 30% frequency)
+- ✅ Pattern-based next access estimation
+- ✅ Observable prediction reasoning
+- ✅ Staleness management with lazy refresh
+
+**Prediction Algorithm:**
+- **Temporal Score (40%)**: Exponential decay based on last access time
+- **Causal Score (30%)**: Position in causal chains (roots score higher)
+- **Frequency Score (30%)**: Logarithmic scaling of access count
+
+**Use Cases:**
+- Pre-fetch high-value contexts for faster retrieval
+- Cache frequently accessed contexts in memory
+- Prioritize contexts by prediction score
+- Identify patterns in context usage
+
+### **Temporal Intelligence Flow:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   WAKE INTELLIGENCE BRAIN                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  LAYER 3: PROPAGATION ENGINE (Future - WHAT)                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • Predicts WHAT will be needed next                 │    │
+│  │ • Composite scoring (temporal + causal + frequency) │    │
+│  │ • Pre-fetching optimization                         │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
+│  LAYER 2: MEMORY MANAGER (Present - HOW)                    │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • Tracks HOW relevant contexts are NOW              │    │
+│  │ • 4-tier memory classification                      │    │
+│  │ • LRU tracking + automatic tier updates             │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
+│  LAYER 1: CAUSALITY ENGINE (Past - WHY)                     │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • Tracks WHY contexts were created                  │    │
+│  │ • Causal chain tracking                             │    │
+│  │ • Dependency auto-detection                         │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- 🎯 **Learn from the past**: Understand causal relationships
+- 🎯 **Optimize the present**: Manage memory intelligently
+- 🎯 **Predict the future**: Pre-fetch what's needed next
+- 🎯 **Observable reasoning**: Every decision is explainable
+- 🎯 **Deterministic algorithms**: No black-box predictions
 
 ## 🎯 What Makes This Different
 
@@ -222,9 +323,25 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 
 ## Features
 
+### Core Context Management
 - **save_context**: Save conversation context with AI-powered summarization and auto-tagging
-- **load_context**: Retrieve relevant context for a project
-- **search_context**: Search contexts using keyword matching
+- **load_context**: Retrieve relevant context for a project (with Layer 2 LRU tracking)
+- **search_context**: Search contexts using keyword matching (with Layer 2 access tracking)
+
+### Wake Intelligence Layer 1: Causality (Past)
+- **reconstruct_reasoning**: Understand WHY a context was created
+- **build_causal_chain**: Trace decision history backwards through time
+- **get_causality_stats**: Analytics on causal relationships and action types
+
+### Wake Intelligence Layer 2: Memory (Present)
+- **get_memory_stats**: View memory tier distribution and access patterns
+- **recalculate_memory_tiers**: Update tier classifications based on current time
+- **prune_expired_contexts**: Automatic cleanup of old, unused contexts
+
+### Wake Intelligence Layer 3: Propagation (Future)
+- **update_predictions**: Refresh prediction scores for a project
+- **get_high_value_contexts**: Retrieve contexts most likely to be accessed next
+- **get_propagation_stats**: Analytics on prediction quality and patterns
 
 ## 🧪 Testing
 

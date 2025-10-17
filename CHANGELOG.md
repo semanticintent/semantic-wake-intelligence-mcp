@@ -9,15 +9,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned - Brain Architecture Implementation
-- **Layer 1: Causality Engine** - Action history, rationale tracking, causal chains
-- **Layer 2: Memory Manager Enhancements** - Memory tiers, LRU tracking, auto-pruning
-- **Layer 3: Propagation Engine** - Temporal decay, pattern learning, context priming
-- **New MCP Tools** - get_context_with_relevance, detect_patterns, prime_context
-- **Database Migrations** - 0002_add_causality.sql, 0003_add_memory_tiers.sql
-- Integration tests with temporal intelligence workflows
-- Performance benchmarks for context retrieval and pattern detection
-- Video tutorials demonstrating 3-layer brain architecture
+### Planned - Future Enhancements
+- **Layer 4: Meta-Learning** - Learn from prediction accuracy to tune weights
+- **Layer 5: Cross-Project Intelligence** - Identify patterns across projects
+- **Advanced Analytics** - Prediction accuracy tracking and reporting
+- **Visualization Tools** - Graph causal chains and memory tiers
+- **Performance Optimizations** - Caching and pre-fetching improvements
+- **Video Tutorials** - Demonstrating 3-layer brain architecture
+
+---
+
+## [3.0.0] - 2025-10-17 🧠 WAKE INTELLIGENCE BRAIN COMPLETE
+
+### Major: Layer 3 (Propagation Engine) Implementation
+
+This release completes the **3-layer Wake Intelligence brain architecture** with the addition of Layer 3: Propagation Engine, which predicts WHAT contexts will be needed next.
+
+### Added - Layer 3: Propagation Engine (Future - WHAT)
+
+- **PropagationService** - Orchestrates prediction workflow ([src/domain/services/PropagationService.ts](src/domain/services/PropagationService.ts))
+  - `predictContext()` - Calculate composite prediction scores
+  - `calculateCausalStrength()` - Score based on causal chain position
+  - `estimateNextAccess()` - Pattern-based next access time estimation
+  - `generatePropagationReasons()` - Human-readable prediction explanations
+  - `updateProjectPredictions()` - Batch prediction refresh
+  - `getHighValueContexts()` - Retrieve pre-fetch candidates
+  - `refreshPredictionIfStale()` - Lazy prediction refresh
+
+- **Composite Prediction Scoring**
+  - 40% Temporal: Exponential decay based on last access time
+  - 30% Causal: Position in causal chains (roots score higher)
+  - 30% Frequency: Logarithmic scaling of access count
+
+- **Domain Model Updates** ([src/domain/models/ContextSnapshot.ts](src/domain/models/ContextSnapshot.ts))
+  - `PropagationMetadata` interface (score, timestamps, reasons)
+  - `calculatePropagationScore()` - Composite scoring algorithm
+  - `calculateTemporalScore()` - Exponential decay scoring
+  - `calculateFrequencyScore()` - Logarithmic frequency scoring
+  - `updatePropagation()` - Immutable propagation updates
+
+- **Database Layer** ([migrations/0004_add_propagation_engine.sql](migrations/0004_add_propagation_engine.sql))
+  - `prediction_score` column - 0.0-1.0 composite score
+  - `last_predicted` column - When prediction was calculated
+  - `predicted_next_access` column - Estimated next access time
+  - `propagation_reason` column - JSON array of prediction reasons
+  - 3 new indexes for efficient prediction queries
+
+- **Repository Methods** ([src/infrastructure/adapters/D1ContextRepository.ts](src/infrastructure/adapters/D1ContextRepository.ts))
+  - `updatePropagation()` - Persist prediction metadata
+  - `findByPredictionScore()` - Query high-value contexts
+  - `findStalePredictions()` - Identify contexts needing re-prediction
+  - Updated `save()` to persist propagation fields
+  - Updated deserialization to reconstruct propagation data
+
+- **ContextService Integration** ([src/domain/services/ContextService.ts](src/domain/services/ContextService.ts))
+  - `updatePredictions()` - Refresh prediction scores for project
+  - `getHighValueContexts()` - Get contexts most likely to be accessed next
+  - `getPropagationStats()` - Analytics on prediction quality and patterns
+
+- **New MCP Tools**
+  - `update_predictions` - Refresh prediction scores for a project
+  - `get_high_value_contexts` - Retrieve contexts with high prediction scores
+  - `get_propagation_stats` - View prediction analytics
+
+### Changed - Documentation & Branding
+
+- **README.md** - Completely rewritten with Wake Intelligence branding
+  - Prominent 3-layer brain architecture section
+  - Detailed feature breakdown by layer
+  - ASCII art visualization of temporal intelligence flow
+  - Updated features section with all MCP tools
+
+- **ARCHITECTURE.md** - New comprehensive architecture documentation
+  - Complete Layer 1, 2, 3 algorithm descriptions
+  - Database schema with all migrations
+  - Hexagonal architecture explanation
+  - Data flow diagrams
+  - Design principles and patterns
+
+- **package.json** - Updated to v3.0.0
+  - Enhanced description emphasizing 3-layer brain
+  - Updated keywords (causality-engine, memory-manager, propagation-engine, etc.)
+
+- **MIGRATION.md** - New migration guide for repository rename
+  - Instructions for updating git remotes
+  - CI/CD pipeline updates
+  - MCP client configuration updates
+
+### Fixed
+
+- Test files updated to support 12-parameter ContextSnapshot constructor
+- Mock repositories in tests include new propagation methods
+- TypeScript compilation passes with no errors
+
+### Database Migrations
+
+- ✅ Migration 0001: Initial schema
+- ✅ Migration 0002: Layer 1 (Causality Engine)
+- ✅ Migration 0003: Layer 2 (Memory Manager)
+- ✅ Migration 0004: Layer 3 (Propagation Engine)
+
+### Deployment
+
+- **Production:** semantic-wake-intelligence-mcp.michshat.workers.dev
+- **Version ID:** 1904cf57-39d2-42e0-b505-dd29ecf84578
+- **Database:** wake-intelligence (local + remote migrated)
+
+### Wake Intelligence Brain - Complete! 🎉
+
+- ✅ **Layer 1 (Past):** Causality Engine - WHY contexts were saved
+- ✅ **Layer 2 (Present):** Memory Manager - HOW relevant contexts are NOW
+- ✅ **Layer 3 (Future):** Propagation Engine - WHAT will be needed next
+
+**Benefits:**
+- 🎯 Learn from the past: Understand causal relationships
+- 🎯 Optimize the present: Manage memory intelligently
+- 🎯 Predict the future: Pre-fetch what's needed next
+- 🎯 Observable reasoning: Every decision is explainable
+- 🎯 Deterministic algorithms: No black-box predictions
 
 ---
 
