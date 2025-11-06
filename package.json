@@ -47,7 +47,7 @@
 		"@cloudflare/agents": "^0.0.16",
 		"@modelcontextprotocol/sdk": "^1.20.2",
 		"agents": "^0.2.20",
-		"zod": "^3.25.76"
+		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.2",
