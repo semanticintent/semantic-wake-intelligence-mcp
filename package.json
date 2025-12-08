@@ -45,7 +45,7 @@
 	},
 	"dependencies": {
 		"@cloudflare/agents": "^0.0.16",
-		"@modelcontextprotocol/sdk": "^1.22.0",
+		"@modelcontextprotocol/sdk": "^1.24.3",
 		"agents": "^0.2.23",
 		"zod": "^3.25.76"
 	},
