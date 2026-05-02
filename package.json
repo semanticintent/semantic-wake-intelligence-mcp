@@ -1,6 +1,6 @@
 {
 	"name": "@semanticintent/semantic-wake-intelligence-mcp",
-	"version": "3.1.0",
+	"version": "3.2.0",
 	"description": "Wake Intelligence - 3-layer temporal intelligence brain for AI agents (Past/Present/Future). MCP server with causality tracking, memory management, and predictive pre-fetching.",
 	"keywords": [
 		"mcp",
