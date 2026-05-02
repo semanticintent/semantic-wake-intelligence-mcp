@@ -11,8 +11,9 @@ class MockContextRepository implements IContextRepository {
   findByProject = vi.fn();
   search = vi.fn();
   findById = vi.fn();
-  findRecent = vi.fn()
+  findRecent = vi.fn().mockResolvedValue([]);
   findRecentAcrossProjects = vi.fn().mockResolvedValue([]);
+  findDependents = vi.fn().mockResolvedValue([]);
   updateMemoryTier = vi.fn();
   updateAccessTracking = vi.fn();
   findByMemoryTier = vi.fn();
