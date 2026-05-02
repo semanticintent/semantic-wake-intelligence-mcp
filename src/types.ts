@@ -271,6 +271,88 @@ export interface ToolResult {
 }
 
 /**
+ * 🎯 WAKE INTELLIGENCE: Prediction Outcome (Layer 4: Meta-Learning)
+ *
+ * Records whether a context that had a prediction score was actually accessed.
+ * Stores individual component scores so weight tuning can identify which
+ * dimension (temporal/causal/frequency) best predicts access for this project.
+ *
+ * OBSERVABLE ANCHORING:
+ * - Component scores recalculated at access time (deterministic)
+ * - actually_accessed always true when recorded (passive recording only)
+ * - recordedAt is the access timestamp
+ */
+export interface PredictionOutcome {
+  /** Unique identifier */
+  id: string;
+  /** Context that was accessed */
+  contextId: string;
+  /** Project the context belongs to */
+  project: string;
+  /** Composite prediction score at time of access */
+  predictedScore: number;
+  /** Temporal component score at time of access (0.0-1.0) */
+  temporalComponent: number;
+  /** Causal component score at time of access (0.0-1.0) */
+  causalComponent: number;
+  /** Frequency component score at time of access (0.0-1.0) */
+  frequencyComponent: number;
+  /** Whether the context was actually accessed (always true when recorded) */
+  actuallyAccessed: boolean;
+  /** When this outcome was recorded (ISO timestamp) */
+  recordedAt: string;
+}
+
+/**
+ * 🎯 WAKE INTELLIGENCE: Per-Project Prediction Weights (Layer 4: Meta-Learning)
+ *
+ * Stores learned weights for composite prediction scoring.
+ * Falls back to hardcoded 0.4/0.3/0.3 defaults until sufficient
+ * sample size is accumulated (default: 20 outcomes).
+ *
+ * WEIGHT CONSTRAINTS:
+ * - Each weight: min 0.1, max 0.6
+ * - Sum of weights always normalised to 1.0
+ */
+export interface ProjectWeights {
+  /** Project these weights apply to */
+  project: string;
+  /** Weight for temporal score component (default 0.4) */
+  temporalWeight: number;
+  /** Weight for causal score component (default 0.3) */
+  causalWeight: number;
+  /** Weight for frequency score component (default 0.3) */
+  frequencyWeight: number;
+  /** Number of outcomes used to tune these weights */
+  sampleSize: number;
+  /** When weights were last tuned (null = using defaults) */
+  lastTuned: string | null;
+}
+
+/**
+ * 🎯 WAKE INTELLIGENCE: Learning Statistics (Layer 4: Meta-Learning)
+ *
+ * Analytics on prediction accuracy and current learned weights for a project.
+ * Exposed via get_learning_stats MCP tool.
+ */
+export interface LearningStats {
+  /** Project these stats apply to */
+  project: string;
+  /** Current weights (learned or defaults) */
+  currentWeights: ProjectWeights;
+  /** Total outcomes recorded for this project */
+  sampleSize: number;
+  /** When weights were last tuned */
+  lastTuned: string | null;
+  /** Average temporal component across all outcomes */
+  avgTemporalComponent: number;
+  /** Average causal component across all outcomes */
+  avgCausalComponent: number;
+  /** Average frequency component across all outcomes */
+  avgFrequencyComponent: number;
+}
+
+/**
  * 🎯 TYPE GUARD: Runtime Type Validation
  *
  * Validates semantic contract compliance at runtime.
