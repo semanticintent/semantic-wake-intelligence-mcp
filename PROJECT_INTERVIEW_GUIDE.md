@@ -110,6 +110,7 @@ Wake Intelligence is an MCP server implementing a **4-layer temporal intelligenc
                   │
 ┌─────────────────▼──────────────────────────┐
 │           Domain Layer                     │
+│   • MetaLearningService (Layer 4)         │
 │   • PropagationService (Layer 3)          │
 │   • MemoryManagerService (Layer 2)        │
 │   • CausalityService (Layer 1)            │
