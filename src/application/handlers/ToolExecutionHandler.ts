@@ -84,6 +84,9 @@ export class ToolExecutionHandler {
       case 'reindex_project':
         return this.handleReindexProject(args as { project: string });
 
+      case 'get_cross_project_dependents':
+        return this.handleGetCrossProjectDependents(args as { snapshotId: string });
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -403,6 +406,30 @@ ${Object.entries(stats.actionTypeCounts)
         text: count > 0
           ? `Reindexed ${count} contexts for project "${args.project}" — semantic search now covers all existing snapshots.`
           : `No contexts reindexed for "${args.project}". Either no contexts exist or the vector index is not configured.`
+      }]
+    };
+  }
+
+  private async handleGetCrossProjectDependents(args: { snapshotId: string }): Promise<ToolResult> {
+    const dependents = await this.contextService.getDownstreamDependents(args.snapshotId);
+
+    if (dependents.length === 0) {
+      return {
+        content: [{
+          type: "text",
+          text: `No downstream dependents found for snapshot: ${args.snapshotId}`
+        }]
+      };
+    }
+
+    const list = dependents
+      .map(ctx => `**${ctx.project}** (${ctx.timestamp})\n${ctx.summary}\nID: ${ctx.id}`)
+      .join('\n\n');
+
+    return {
+      content: [{
+        type: "text",
+        text: `Found ${dependents.length} downstream dependent(s):\n\n${list}`
       }]
     };
   }

@@ -215,6 +215,9 @@ export interface SaveContextInput {
 
   /** Optional causality metadata for Layer 1 tracking */
   causality?: CausalityMetadata;
+
+  /** Cross-project dependency detection: include recent contexts from ALL projects */
+  crossProject?: boolean;
 }
 
 /**

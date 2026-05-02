@@ -24,7 +24,8 @@ const TOOL_DEFINITIONS = [
         project: { type: "string", description: "Project identifier" },
         content: { type: "string", description: "Context content to save" },
         source: { type: "string", description: "Source of the context", default: "mcp" },
-        metadata: { type: "object", description: "Additional metadata" }
+        metadata: { type: "object", description: "Additional metadata" },
+        crossProject: { type: "boolean", description: "Include recent contexts from ALL projects when detecting dependencies (default: false)" }
       },
       required: ["project", "content"]
     }
@@ -178,6 +179,18 @@ const TOOL_DEFINITIONS = [
         project: { type: "string", description: "Project identifier" }
       },
       required: ["project"]
+    }
+  },
+  // Cross-project causality
+  {
+    name: "get_cross_project_dependents",
+    description: "Find all contexts across any project that were caused by (directly or transitively) a given context snapshot",
+    inputSchema: {
+      type: "object",
+      properties: {
+        snapshotId: { type: "string", description: "ID of the root context snapshot" }
+      },
+      required: ["snapshotId"]
     }
   }
 ];
