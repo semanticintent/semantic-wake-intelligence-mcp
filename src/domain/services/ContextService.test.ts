@@ -40,6 +40,7 @@ class MockContextRepository implements IContextRepository {
 class MockAIProvider implements IAIProvider {
   generateSummary = vi.fn();
   generateTags = vi.fn();
+  generateEmbedding = vi.fn().mockResolvedValue([]);
 }
 
 describe('ContextService Domain Service', () => {

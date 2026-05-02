@@ -19,6 +19,7 @@
 export interface Env {
   DB: D1Database;
   AI: Ai;
+  VECTORIZE: VectorizeIndex;
   MCP_SECRET: string;
 }
 
