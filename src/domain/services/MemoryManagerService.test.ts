@@ -62,6 +62,7 @@ describe('MemoryManagerService', () => {
       search: vi.fn().mockResolvedValue([]),
       findById: vi.fn().mockResolvedValue(null),
       findRecent: vi.fn().mockResolvedValue([]),
+      findRecentAcrossProjects: vi.fn().mockResolvedValue([]),
       updateMemoryTier: vi.fn().mockResolvedValue(undefined),
       updateAccessTracking: vi.fn().mockResolvedValue(undefined),
       findByMemoryTier: vi.fn().mockResolvedValue([]),

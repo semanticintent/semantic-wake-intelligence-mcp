@@ -22,7 +22,8 @@ import type { ActionType } from '../../types';
 class MockContextRepository implements IContextRepository {
   save = vi.fn();
   findById = vi.fn();
-  findRecent = vi.fn();
+  findRecent = vi.fn()
+  findRecentAcrossProjects = vi.fn().mockResolvedValue([]);
   findByProject = vi.fn();
   search = vi.fn();
   updateMemoryTier = vi.fn();

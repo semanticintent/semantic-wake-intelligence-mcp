@@ -71,22 +71,17 @@ export class CausalityService {
     actionType: ActionType,
     rationale: string,
     causedBy: string | null = null,
-    project?: string
+    project?: string,
+    allProjects: boolean = false
   ): Promise<CausalityMetadata> {
-    // Auto-detect dependencies from recent context
     const dependencies: string[] = [];
 
     if (project) {
-      const detected = await this.detectDependencies(project, new Date());
+      const detected = await this.detectDependencies(project, new Date(), 1, allProjects);
       dependencies.push(...detected.snapshots.map(s => s.id));
     }
 
-    return {
-      actionType,
-      rationale,
-      dependencies,
-      causedBy,
-    };
+    return { actionType, rationale, dependencies, causedBy };
   }
 
   /**
@@ -210,22 +205,23 @@ export class CausalityService {
   async detectDependencies(
     project: string,
     timestamp: Date = new Date(),
-    hoursBack: number = 1
+    hoursBack: number = 1,
+    allProjects: boolean = false
   ): Promise<DetectedDependencies> {
     const beforeTimestamp = timestamp.toISOString();
-    const snapshots = await this.repository.findRecent(project, beforeTimestamp, hoursBack);
 
-    // Limit to most recent 5 to prevent dependency explosion
+    const snapshots = allProjects
+      ? await this.repository.findRecentAcrossProjects(beforeTimestamp, hoursBack)
+      : await this.repository.findRecent(project, beforeTimestamp, hoursBack);
+
     const recentSnapshots = snapshots.slice(0, 5);
 
+    const scope = allProjects ? 'all projects' : `project "${project}"`;
     const reason = recentSnapshots.length > 0
-      ? `Found ${recentSnapshots.length} context(s) from the last ${hoursBack} hour(s) in project "${project}"`
-      : `No recent contexts found in the last ${hoursBack} hour(s)`;
+      ? `Found ${recentSnapshots.length} context(s) from the last ${hoursBack} hour(s) across ${scope}`
+      : `No recent contexts found in the last ${hoursBack} hour(s) across ${scope}`;
 
-    return {
-      snapshots: recentSnapshots,
-      reason,
-    };
+    return { snapshots: recentSnapshots, reason };
   }
 
   /**
