@@ -14,6 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ContextService } from './ContextService';
 import type { IContextRepository } from '../../application/ports/IContextRepository';
 import type { IAIProvider } from '../../application/ports/IAIProvider';
+import type { IVectorRepository } from '../../application/ports/IVectorRepository';
 import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
 
 // Mock implementations
@@ -41,6 +42,12 @@ class MockAIProvider implements IAIProvider {
   generateSummary = vi.fn();
   generateTags = vi.fn();
   generateEmbedding = vi.fn().mockResolvedValue([]);
+}
+
+class MockVectorRepository implements IVectorRepository {
+  upsert = vi.fn().mockResolvedValue(undefined);
+  query = vi.fn().mockResolvedValue([]);
+  delete = vi.fn().mockResolvedValue(undefined);
 }
 
 describe('ContextService Domain Service', () => {
@@ -381,6 +388,49 @@ describe('ContextService Domain Service', () => {
       expect(stats.sampleSize).toBe(0);
       expect(stats.currentWeights.temporalWeight).toBe(0.4);
       expect(stats.avgTemporalComponent).toBe(0);
+    });
+  });
+
+  // ─── Save-time embedding (Semantic Search infrastructure) ──────────────────
+
+  describe('saveContext() — embedding', () => {
+    let mockVectors: MockVectorRepository;
+
+    beforeEach(() => {
+      mockVectors = new MockVectorRepository();
+      mockAIProvider.generateSummary.mockResolvedValue('AI summary');
+      mockAIProvider.generateTags.mockResolvedValue('tag1,tag2');
+      mockRepository.save.mockResolvedValue('ctx-1');
+      mockRepository.findRecent.mockResolvedValue([]);
+    });
+
+    it('should upsert embedding to vector repo after save when vector is returned', async () => {
+      const vector = new Array(768).fill(0.1);
+      mockAIProvider.generateEmbedding.mockResolvedValue(vector);
+      const serviceWithVectors = new ContextService(mockRepository, mockAIProvider, mockVectors);
+
+      await serviceWithVectors.saveContext({ project: 'p', content: 'c', source: 'mcp' });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockAIProvider.generateEmbedding).toHaveBeenCalledWith('AI summary');
+      expect(mockVectors.upsert).toHaveBeenCalledOnce();
+    });
+
+    it('should skip upsert when embedding returns empty array', async () => {
+      mockAIProvider.generateEmbedding.mockResolvedValue([]);
+      const serviceWithVectors = new ContextService(mockRepository, mockAIProvider, mockVectors);
+
+      await serviceWithVectors.saveContext({ project: 'p', content: 'c', source: 'mcp' });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockVectors.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should skip embedding entirely when no vector repo provided', async () => {
+      await contextService.saveContext({ project: 'p', content: 'c', source: 'mcp' });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockAIProvider.generateEmbedding).not.toHaveBeenCalled();
     });
   });
 });

@@ -35,6 +35,7 @@
 
 import type { IContextRepository } from '../../application/ports/IContextRepository';
 import type { IAIProvider } from '../../application/ports/IAIProvider';
+import type { IVectorRepository } from '../../application/ports/IVectorRepository';
 import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
 import { ContextSnapshot } from '../models/ContextSnapshot';
 import { CausalityService } from './CausalityService';
@@ -59,7 +60,8 @@ export class ContextService {
 
   constructor(
     private readonly repository: IContextRepository,
-    private readonly aiProvider: IAIProvider
+    private readonly aiProvider: IAIProvider,
+    private readonly vectorRepository?: IVectorRepository
   ) {
     this.causalityService = new CausalityService(repository);
     this.memoryManager = new MemoryManagerService(repository);
@@ -114,6 +116,11 @@ export class ContextService {
 
     // Step 4: Persistence - Delegate to infrastructure
     await this.repository.save(snapshot);
+
+    // Layer 5: Embed summary for semantic search (fire-and-forget)
+    this.embedAndUpsert(snapshot).catch(err => {
+      console.error(`Failed to embed context ${snapshot.id}:`, err);
+    });
 
     return snapshot;
   }
@@ -324,6 +331,13 @@ export class ContextService {
    * @param project - Project to analyze
    * @returns Statistics on prediction scores, reasons, accuracy
    */
+  private async embedAndUpsert(snapshot: ContextSnapshot): Promise<void> {
+    if (!this.vectorRepository) return;
+    const vector = await this.aiProvider.generateEmbedding(snapshot.summary);
+    if (vector.length === 0) return;
+    await this.vectorRepository.upsert(snapshot.id, vector, snapshot.project);
+  }
+
   async getPropagationStats(project: string) {
     // Get high-value contexts
     const highValue = await this.repository.findByPredictionScore(0.6, project, 100);

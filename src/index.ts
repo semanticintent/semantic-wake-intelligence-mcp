@@ -22,6 +22,7 @@
 // Infrastructure Layer
 import { D1ContextRepository } from './infrastructure/adapters/D1ContextRepository';
 import { CloudflareAIProvider } from './infrastructure/adapters/CloudflareAIProvider';
+import { VectorizeRepository } from './infrastructure/adapters/VectorizeRepository';
 
 // Domain Layer
 import { ContextService } from './domain/services/ContextService';
@@ -59,9 +60,10 @@ export default {
       // LAYER 1: Infrastructure - Technical adapters
       const repository = new D1ContextRepository(env.DB);
       const aiProvider = new CloudflareAIProvider(env.AI);
+      const vectorRepository = new VectorizeRepository(env.VECTORIZE);
 
       // LAYER 2: Domain - Business logic
-      const contextService = new ContextService(repository, aiProvider);
+      const contextService = new ContextService(repository, aiProvider, vectorRepository);
 
       // LAYER 3: Application - Orchestration
       const toolHandler = new ToolExecutionHandler(contextService);
@@ -95,7 +97,8 @@ export default {
     try {
       const repository = new D1ContextRepository(env.DB);
       const aiProvider = new CloudflareAIProvider(env.AI);
-      const contextService = new ContextService(repository, aiProvider);
+      const vectorRepository = new VectorizeRepository(env.VECTORIZE);
+      const contextService = new ContextService(repository, aiProvider, vectorRepository);
 
       const updated = await contextService.refreshStalePredictions();
       console.log(`[cron] Refreshed ${updated} stale predictions`);
