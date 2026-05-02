@@ -18,7 +18,7 @@
  * - Both depend on this abstraction
  */
 
-import type { ContextSnapshot } from '../../types';
+import type { ContextSnapshot, PredictionOutcome, ProjectWeights } from '../../types';
 
 /**
  * Repository contract for context snapshot persistence.
@@ -34,6 +34,10 @@ import type { ContextSnapshot } from '../../types';
  * - updateAccessTracking: Update LRU metadata (Layer 2: Memory Manager)
  * - findByMemoryTier: Find contexts by tier (Layer 2: Memory Manager)
  * - delete: Remove a single context by ID (Layer 2: Memory pruning)
+ * - recordPredictionOutcome: Record access event with component scores (Layer 4)
+ * - findOutcomesByProject: Retrieve outcomes for weight tuning (Layer 4)
+ * - getProjectWeights: Get learned weights for a project (Layer 4)
+ * - saveProjectWeights: Upsert learned weights for a project (Layer 4)
  */
 export interface IContextRepository {
   /**
@@ -224,4 +228,47 @@ export interface IContextRepository {
    * @returns void
    */
   delete(id: string): Promise<void>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Record prediction outcome (Layer 4: Meta-Learning)
+   *
+   * PURPOSE: Capture component scores when a context is accessed, enabling
+   * weight tuning toward whichever dimension best predicts access.
+   *
+   * FIRE-AND-FORGET: Called alongside memoryManager.trackAccess(), non-blocking.
+   *
+   * @param outcome - Outcome record with component scores
+   */
+  recordPredictionOutcome(outcome: PredictionOutcome): Promise<void>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Find prediction outcomes by project (Layer 4: Meta-Learning)
+   *
+   * PURPOSE: Retrieve outcomes for weight tuning calculation.
+   *
+   * @param project - Project to retrieve outcomes for
+   * @param limit - Maximum outcomes to return (default: 100)
+   * @returns Outcomes ordered newest first
+   */
+  findOutcomesByProject(project: string, limit?: number): Promise<PredictionOutcome[]>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Get learned weights for a project (Layer 4: Meta-Learning)
+   *
+   * PURPOSE: Retrieve per-project tuned weights for use in prediction scoring.
+   * Returns null if not yet tuned — caller falls back to 0.4/0.3/0.3 defaults.
+   *
+   * @param project - Project to retrieve weights for
+   * @returns Learned weights or null if project has no tuned weights yet
+   */
+  getProjectWeights(project: string): Promise<ProjectWeights | null>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Save learned weights for a project (Layer 4: Meta-Learning)
+   *
+   * PURPOSE: Upsert per-project weights after each tuning run.
+   *
+   * @param weights - New learned weights to persist
+   */
+  saveProjectWeights(weights: ProjectWeights): Promise<void>;
 }

@@ -62,6 +62,10 @@ class MockContextRepository implements IContextRepository {
   findByPredictionScore = vi.fn().mockResolvedValue([]);
   findStalePredictions = vi.fn().mockResolvedValue([]);
   delete = vi.fn().mockResolvedValue(undefined);
+  recordPredictionOutcome = vi.fn();
+  findOutcomesByProject = vi.fn();
+  getProjectWeights = vi.fn();
+  saveProjectWeights = vi.fn();
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

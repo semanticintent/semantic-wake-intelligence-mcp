@@ -20,7 +20,7 @@
  */
 
 import type { IContextRepository } from '../../application/ports/IContextRepository';
-import type { ContextSnapshot } from '../../types';
+import type { ContextSnapshot, PredictionOutcome, ProjectWeights } from '../../types';
 
 /**
  * D1-specific implementation of context persistence.
@@ -426,5 +426,91 @@ export class D1ContextRepository implements IContextRepository {
 
     if (!results) return [];
     return results.map(row => this.deserializeCausality(row));
+  }
+
+  // ─── Layer 4: Meta-Learning ────────────────────────────────────────────────
+
+  private deserializePredictionOutcome(row: any): PredictionOutcome {
+    return {
+      id: row.id,
+      contextId: row.context_id,
+      project: row.project,
+      predictedScore: row.predicted_score,
+      temporalComponent: row.temporal_component,
+      causalComponent: row.causal_component,
+      frequencyComponent: row.frequency_component,
+      actuallyAccessed: Boolean(row.actually_accessed),
+      recordedAt: row.recorded_at,
+    };
+  }
+
+  private deserializeProjectWeights(row: any): ProjectWeights {
+    return {
+      project: row.project,
+      temporalWeight: row.temporal_weight,
+      causalWeight: row.causal_weight,
+      frequencyWeight: row.frequency_weight,
+      sampleSize: row.sample_size,
+      lastTuned: row.last_tuned || null,
+    };
+  }
+
+  async recordPredictionOutcome(outcome: PredictionOutcome): Promise<void> {
+    await this.db.prepare(
+      `INSERT INTO prediction_outcomes
+       (id, context_id, project, predicted_score, temporal_component, causal_component, frequency_component, actually_accessed, recorded_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      outcome.id,
+      outcome.contextId,
+      outcome.project,
+      outcome.predictedScore,
+      outcome.temporalComponent,
+      outcome.causalComponent,
+      outcome.frequencyComponent,
+      outcome.actuallyAccessed ? 1 : 0,
+      outcome.recordedAt
+    ).run();
+  }
+
+  async findOutcomesByProject(project: string, limit: number = 100): Promise<PredictionOutcome[]> {
+    const { results } = await this.db.prepare(
+      `SELECT * FROM prediction_outcomes
+       WHERE project = ?
+       ORDER BY recorded_at DESC
+       LIMIT ?`
+    ).bind(project, limit).all();
+
+    if (!results) return [];
+    return results.map(row => this.deserializePredictionOutcome(row));
+  }
+
+  async getProjectWeights(project: string): Promise<ProjectWeights | null> {
+    const { results } = await this.db.prepare(
+      `SELECT * FROM project_weights WHERE project = ? LIMIT 1`
+    ).bind(project).all();
+
+    if (!results || results.length === 0) return null;
+    return this.deserializeProjectWeights(results[0]);
+  }
+
+  async saveProjectWeights(weights: ProjectWeights): Promise<void> {
+    await this.db.prepare(
+      `INSERT INTO project_weights (project, temporal_weight, causal_weight, frequency_weight, sample_size, last_tuned)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(project) DO UPDATE SET
+         temporal_weight  = excluded.temporal_weight,
+         causal_weight    = excluded.causal_weight,
+         frequency_weight = excluded.frequency_weight,
+         sample_size      = excluded.sample_size,
+         last_tuned       = excluded.last_tuned`
+    ).bind(
+      weights.project,
+      weights.temporalWeight,
+      weights.causalWeight,
+      weights.frequencyWeight,
+      weights.sampleSize,
+      weights.lastTuned
+    ).run();
   }
 }

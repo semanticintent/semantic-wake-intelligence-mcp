@@ -363,6 +363,176 @@ describe('D1ContextRepository', () => {
     });
   });
 
+  describe('Layer 4: Meta-Learning Methods', () => {
+    describe('recordPredictionOutcome()', () => {
+      it('should INSERT into prediction_outcomes with all fields', async () => {
+        const outcome = {
+          id: 'outcome-1',
+          contextId: 'ctx-1',
+          project: 'test-project',
+          predictedScore: 0.75,
+          temporalComponent: 0.8,
+          causalComponent: 0.6,
+          frequencyComponent: 0.7,
+          actuallyAccessed: true,
+          recordedAt: '2026-05-01T10:00:00.000Z',
+        };
+
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        const runSpy = vi.spyOn(mockStatement, 'run');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        await repository.recordPredictionOutcome(outcome);
+
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('INSERT INTO prediction_outcomes')
+        );
+        expect(bindSpy).toHaveBeenCalledWith(
+          'outcome-1', 'ctx-1', 'test-project',
+          0.75, 0.8, 0.6, 0.7,
+          1,
+          '2026-05-01T10:00:00.000Z'
+        );
+        expect(runSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe('findOutcomesByProject()', () => {
+      it('should query with project filter and default limit of 100', async () => {
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        await repository.findOutcomesByProject('test-project');
+
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('WHERE project = ?')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('ORDER BY recorded_at DESC')
+        );
+        expect(bindSpy).toHaveBeenCalledWith('test-project', 100);
+      });
+
+      it('should accept custom limit', async () => {
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        await repository.findOutcomesByProject('test-project', 50);
+
+        expect(bindSpy).toHaveBeenCalledWith('test-project', 50);
+      });
+
+      it('should transform results to PredictionOutcome array', async () => {
+        const mockResults = [
+          {
+            id: 'outcome-1',
+            context_id: 'ctx-1',
+            project: 'test-project',
+            predicted_score: 0.75,
+            temporal_component: 0.8,
+            causal_component: 0.6,
+            frequency_component: 0.7,
+            actually_accessed: 1,
+            recorded_at: '2026-05-01T10:00:00.000Z',
+          },
+        ];
+
+        const mockStatement = new MockD1PreparedStatement();
+        vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: mockResults });
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        const results = await repository.findOutcomesByProject('test-project');
+
+        expect(results).toHaveLength(1);
+        expect(results[0].contextId).toBe('ctx-1');
+        expect(results[0].predictedScore).toBe(0.75);
+        expect(results[0].actuallyAccessed).toBe(true);
+      });
+
+      it('should return empty array when no outcomes exist', async () => {
+        const mockStatement = new MockD1PreparedStatement();
+        vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: [] });
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        const results = await repository.findOutcomesByProject('new-project');
+
+        expect(results).toEqual([]);
+      });
+    });
+
+    describe('getProjectWeights()', () => {
+      it('should return null when no weights exist for project', async () => {
+        const mockStatement = new MockD1PreparedStatement();
+        vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: [] });
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        const result = await repository.getProjectWeights('new-project');
+
+        expect(result).toBeNull();
+      });
+
+      it('should return learned weights when they exist', async () => {
+        const mockResults = [
+          {
+            project: 'test-project',
+            temporal_weight: 0.5,
+            causal_weight: 0.3,
+            frequency_weight: 0.2,
+            sample_size: 42,
+            last_tuned: '2026-05-01T06:00:00.000Z',
+          },
+        ];
+
+        const mockStatement = new MockD1PreparedStatement();
+        vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: mockResults });
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        const result = await repository.getProjectWeights('test-project');
+
+        expect(result).not.toBeNull();
+        expect(result!.temporalWeight).toBe(0.5);
+        expect(result!.causalWeight).toBe(0.3);
+        expect(result!.frequencyWeight).toBe(0.2);
+        expect(result!.sampleSize).toBe(42);
+        expect(result!.lastTuned).toBe('2026-05-01T06:00:00.000Z');
+      });
+    });
+
+    describe('saveProjectWeights()', () => {
+      it('should upsert weights with ON CONFLICT update', async () => {
+        const weights = {
+          project: 'test-project',
+          temporalWeight: 0.5,
+          causalWeight: 0.3,
+          frequencyWeight: 0.2,
+          sampleSize: 25,
+          lastTuned: '2026-05-01T06:00:00.000Z',
+        };
+
+        const mockStatement = new MockD1PreparedStatement();
+        const bindSpy = vi.spyOn(mockStatement, 'bind');
+        const runSpy = vi.spyOn(mockStatement, 'run');
+        mockDb.prepare.mockReturnValue(mockStatement);
+
+        await repository.saveProjectWeights(weights);
+
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('INSERT INTO project_weights')
+        );
+        expect(mockDb.prepare).toHaveBeenCalledWith(
+          expect.stringContaining('ON CONFLICT(project) DO UPDATE SET')
+        );
+        expect(bindSpy).toHaveBeenCalledWith(
+          'test-project', 0.5, 0.3, 0.2, 25, '2026-05-01T06:00:00.000Z'
+        );
+        expect(runSpy).toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('Layer 2: Memory Manager Methods', () => {
     describe('updateMemoryTier()', () => {
       it('should execute UPDATE statement with tier and id', async () => {

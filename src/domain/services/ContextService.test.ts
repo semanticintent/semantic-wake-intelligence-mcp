@@ -31,6 +31,10 @@ class MockContextRepository implements IContextRepository {
   findStalePredictions = vi.fn();
   findAll = vi.fn();
   delete = vi.fn();
+  recordPredictionOutcome = vi.fn();
+  findOutcomesByProject = vi.fn();
+  getProjectWeights = vi.fn();
+  saveProjectWeights = vi.fn();
 }
 
 class MockAIProvider implements IAIProvider {
