@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-70%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
+[![Tests](https://img.shields.io/badge/tests-124%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
@@ -79,6 +79,7 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 - ✅ Pattern-based next access estimation
 - ✅ Observable prediction reasoning
 - ✅ Staleness management with lazy refresh
+- ✅ Proactive background refresh via scheduled cron (every 6 hours, all projects)
 
 **Prediction Algorithm:**
 - **Temporal Score (40%)**: Exponential decay based on last access time
@@ -175,12 +176,15 @@ Built on research from [Semantic Intent as Single Source of Truth](https://githu
    wrangler d1 create mcp-context
    ```
 
-   Update `wrangler.jsonc` with your database ID:
+   Update `wrangler.jsonc` with your database ID. The example also includes a `triggers.crons` entry for the Layer 3 scheduled prediction refresh (runs every 6 hours):
    ```jsonc
    {
      "d1_databases": [{
        "database_id": "your-database-id-from-above-command"
-     }]
+     }],
+     "triggers": {
+       "crons": ["0 */6 * * *"]
+     }
    }
    ```
 
@@ -345,7 +349,7 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 
 ## 🧪 Testing
 
-This project includes comprehensive unit tests with **70 tests** covering all architectural layers.
+This project includes comprehensive unit tests with **124 tests** covering all architectural layers.
 
 ### Run Tests
 
@@ -365,11 +369,10 @@ npm run test:coverage
 
 ### Test Coverage
 
-- ✅ **Domain Layer**: 15 tests (ContextSnapshot validation, ContextService orchestration)
+- ✅ **Domain Layer**: 72 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService)
 - ✅ **Application Layer**: 10 tests (ToolExecutionHandler, MCP tool dispatch)
-- ✅ **Infrastructure Layer**: 20 tests (D1Repository, CloudflareAIProvider with fallbacks)
+- ✅ **Infrastructure Layer**: 30 tests (D1Repository, CloudflareAIProvider with fallbacks)
 - ✅ **Presentation Layer**: 12 tests (MCPRouter, CORS, error handling)
-- ✅ **Integration**: 13 tests (End-to-end service flows)
 
 ### Test Structure
 
@@ -383,7 +386,11 @@ src/
 │   │   └── ContextSnapshot.test.ts
 │   └── services/
 │       ├── ContextService.ts
-│       └── ContextService.test.ts
+│       ├── ContextService.test.ts
+│       ├── CausalityService.ts
+│       ├── CausalityService.test.ts
+│       ├── MemoryManagerService.ts
+│       └── MemoryManagerService.test.ts
 ├── application/
 │   └── handlers/
 │       ├── ToolExecutionHandler.ts
