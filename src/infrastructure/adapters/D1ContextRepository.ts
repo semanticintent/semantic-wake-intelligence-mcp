@@ -223,6 +223,16 @@ export class D1ContextRepository implements IContextRepository {
     return results.map(row => this.deserializeCausality(row));
   }
 
+  async findDependents(contextId: string): Promise<ContextSnapshot[]> {
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots
+       WHERE caused_by = ?
+       ORDER BY timestamp ASC`
+    ).bind(contextId).all();
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
   private timestampWindow(beforeTimestamp: string, hoursBack: number) {
     const before = new Date(beforeTimestamp);
     const cutoff = new Date(before.getTime() - hoursBack * 3_600_000).toISOString();

@@ -184,6 +184,41 @@ export class CausalityService {
   }
 
   /**
+   * 🎯 SEMANTIC INTENT: Find all downstream dependents (transitive children)
+   *
+   * PURPOSE: Answer "what work was triggered by this context?" across projects
+   *
+   * ALGORITHM (BFS):
+   * 1. Seed queue with direct children via findDependents
+   * 2. For each child, fetch its children
+   * 3. Accumulate until no more unseen nodes
+   * 4. Visited set prevents infinite loops on cycles
+   *
+   * @param snapshotId - Root snapshot to search downstream from
+   * @returns All descendants ordered by BFS discovery (roughly chronological)
+   */
+  async getDownstreamDependents(snapshotId: string): Promise<IContextSnapshot[]> {
+    const visited = new Set<string>([snapshotId]);
+    const result: IContextSnapshot[] = [];
+    const queue: string[] = [snapshotId];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      const children = await this.repository.findDependents(currentId);
+
+      for (const child of children) {
+        if (!visited.has(child.id)) {
+          visited.add(child.id);
+          result.push(child);
+          queue.push(child.id);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * 🎯 SEMANTIC INTENT: Detect dependencies from temporal proximity
    *
    * PURPOSE: Auto-discover related contexts for dependency tracking

@@ -121,6 +121,17 @@ export interface IContextRepository {
   findRecentAcrossProjects(beforeTimestamp: string, hoursBack: number): Promise<ContextSnapshot[]>;
 
   /**
+   * 🎯 WAKE INTELLIGENCE: Find direct downstream dependents (Layer 1: Cross-project causality)
+   *
+   * PURPOSE: Answer "what did this context cause?" — the complement of causedBy.
+   * Returns all snapshots that name the given contextId as their direct parent.
+   *
+   * @param contextId - Parent snapshot ID to find children of
+   * @returns Direct children ordered by timestamp ASC (chronological)
+   */
+  findDependents(contextId: string): Promise<ContextSnapshot[]>;
+
+  /**
    * 🎯 WAKE INTELLIGENCE: Update memory tier (Layer 2: Memory Manager)
    *
    * PURPOSE: Reclassify snapshot based on current age
