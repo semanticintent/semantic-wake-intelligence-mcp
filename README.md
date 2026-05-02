@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-124%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
+[![Tests](https://img.shields.io/badge/tests-163%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
@@ -349,7 +349,7 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 
 ## 🧪 Testing
 
-This project includes comprehensive unit tests with **124 tests** covering all architectural layers.
+This project includes comprehensive unit tests with **163 tests** covering all architectural layers.
 
 ### Run Tests
 
@@ -369,7 +369,7 @@ npm run test:coverage
 
 ### Test Coverage
 
-- ✅ **Domain Layer**: 72 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService)
+- ✅ **Domain Layer**: 111 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService, PropagationService)
 - ✅ **Application Layer**: 10 tests (ToolExecutionHandler, MCP tool dispatch)
 - ✅ **Infrastructure Layer**: 30 tests (D1Repository, CloudflareAIProvider with fallbacks)
 - ✅ **Presentation Layer**: 12 tests (MCPRouter, CORS, error handling)
@@ -390,7 +390,9 @@ src/
 │       ├── CausalityService.ts
 │       ├── CausalityService.test.ts
 │       ├── MemoryManagerService.ts
-│       └── MemoryManagerService.test.ts
+│       ├── MemoryManagerService.test.ts
+│       ├── PropagationService.ts
+│       └── PropagationService.test.ts
 ├── application/
 │   └── handlers/
 │       ├── ToolExecutionHandler.ts
