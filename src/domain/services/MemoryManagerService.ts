@@ -61,7 +61,7 @@ export class MemoryManagerService {
     const limit = 1000; // Process in batches
     const contexts = project
       ? await this.repository.findByProject(project, limit)
-      : []; // TODO: Add findAll() method to repository
+      : await this.repository.findAll(limit);
 
     let updatedCount = 0;
 
@@ -102,8 +102,10 @@ export class MemoryManagerService {
       limit
     );
 
-    // TODO: Add delete() method to repository
-    // For now, just return count that would be deleted
+    for (const context of expiredContexts) {
+      await this.repository.delete(context.id);
+    }
+
     return expiredContexts.length;
   }
 

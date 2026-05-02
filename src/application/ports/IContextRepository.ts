@@ -26,12 +26,14 @@ import type { ContextSnapshot } from '../../types';
  * SEMANTIC OPERATIONS:
  * - save: Persist semantic snapshot (returns immutable ID)
  * - findByProject: Retrieve by semantic domain anchor
+ * - findAll: Retrieve all contexts across projects (bounded)
  * - search: Find by semantic meaning (summary + tags)
  * - findById: Retrieve single snapshot by ID (Layer 1: Causality)
  * - findRecent: Find contexts within time window (Layer 1: Dependency detection)
  * - updateMemoryTier: Update tier classification (Layer 2: Memory Manager)
  * - updateAccessTracking: Update LRU metadata (Layer 2: Memory Manager)
  * - findByMemoryTier: Find contexts by tier (Layer 2: Memory Manager)
+ * - delete: Remove a single context by ID (Layer 2: Memory pruning)
  */
 export interface IContextRepository {
   /**
@@ -50,6 +52,21 @@ export interface IContextRepository {
    * @returns Contexts ordered by temporal semantic relevance (newest first)
    */
   findByProject(project: string, limit?: number): Promise<ContextSnapshot[]>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Load all contexts across projects (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Enable cross-project tier recalculation and bulk operations
+   *
+   * OBSERVABLE QUERY:
+   * - No project filter (all projects)
+   * - Order by timestamp DESC (temporal relevance)
+   * - Bounded limit (safety cap)
+   *
+   * @param limit - Maximum results (default: 1000)
+   * @returns All contexts ordered by timestamp DESC
+   */
+  findAll(limit?: number): Promise<ContextSnapshot[]>;
 
   /**
    * 🎯 SEMANTIC INTENT: Search by semantic markers
@@ -192,4 +209,19 @@ export interface IContextRepository {
    * @returns Contexts with stale predictions, ordered stalest first
    */
   findStalePredictions(hoursStale: number, limit?: number): Promise<ContextSnapshot[]>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Delete a context by ID (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Permanent removal of expired/pruned contexts
+   *
+   * SAFETY CONTRACT:
+   * - Only called from pruneExpiredContexts (EXPIRED tier only)
+   * - Bounded by caller (max 100 per prune run)
+   * - Irreversible — caller must verify tier before calling
+   *
+   * @param id - Snapshot identifier to permanently delete
+   * @returns void
+   */
+  delete(id: string): Promise<void>;
 }

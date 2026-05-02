@@ -284,6 +284,85 @@ describe('D1ContextRepository', () => {
     });
   });
 
+  describe('findAll()', () => {
+    it('should select all rows with default limit of 1000', async () => {
+      const mockStatement = new MockD1PreparedStatement();
+      const bindSpy = vi.spyOn(mockStatement, 'bind');
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      await repository.findAll();
+
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM context_snapshots')
+      );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.not.stringContaining('WHERE project')
+      );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('ORDER BY timestamp DESC')
+      );
+      expect(bindSpy).toHaveBeenCalledWith(1000);
+    });
+
+    it('should accept custom limit', async () => {
+      const mockStatement = new MockD1PreparedStatement();
+      const bindSpy = vi.spyOn(mockStatement, 'bind');
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      await repository.findAll(500);
+
+      expect(bindSpy).toHaveBeenCalledWith(500);
+    });
+
+    it('should transform results across multiple projects', async () => {
+      const mockResults = [
+        { id: 'p1-ctx', project: 'project-a', summary: 'Alpha', source: 'mcp', metadata: null, tags: 'a', timestamp: '2025-10-06T12:00:00.000Z' },
+        { id: 'p2-ctx', project: 'project-b', summary: 'Beta', source: 'mcp', metadata: null, tags: 'b', timestamp: '2025-10-06T11:00:00.000Z' },
+      ];
+
+      const mockStatement = new MockD1PreparedStatement();
+      vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: mockResults });
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      const results = await repository.findAll();
+
+      expect(results).toHaveLength(2);
+      expect(results[0].project).toBe('project-a');
+      expect(results[1].project).toBe('project-b');
+    });
+
+    it('should return empty array when no contexts exist', async () => {
+      const mockStatement = new MockD1PreparedStatement();
+      vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: [] });
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      const results = await repository.findAll();
+
+      expect(results).toEqual([]);
+    });
+  });
+
+  describe('delete()', () => {
+    it('should execute DELETE statement with id', async () => {
+      const id = 'snapshot-to-delete';
+      const mockStatement = new MockD1PreparedStatement();
+      const bindSpy = vi.spyOn(mockStatement, 'bind');
+      const runSpy = vi.spyOn(mockStatement, 'run');
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      await repository.delete(id);
+
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM context_snapshots')
+      );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE id = ?')
+      );
+      expect(bindSpy).toHaveBeenCalledWith(id);
+      expect(runSpy).toHaveBeenCalled();
+    });
+  });
+
   describe('Layer 2: Memory Manager Methods', () => {
     describe('updateMemoryTier()', () => {
       it('should execute UPDATE statement with tier and id', async () => {

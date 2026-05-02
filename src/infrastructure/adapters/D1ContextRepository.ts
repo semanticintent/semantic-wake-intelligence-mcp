@@ -216,6 +216,27 @@ export class D1ContextRepository implements IContextRepository {
   }
 
   /**
+   * 🎯 WAKE INTELLIGENCE: Load all contexts across projects (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Enable cross-project tier recalculation and bulk operations
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - SELECT all rows (no project filter)
+   * - ORDER BY timestamp DESC
+   * - LIMIT for safety
+   */
+  async findAll(limit: number = 1000): Promise<ContextSnapshot[]> {
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots
+       ORDER BY timestamp DESC
+       LIMIT ?`
+    ).bind(limit).all();
+
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
+  /**
    * 🎯 SEMANTIC INTENT: Search by semantic markers
    *
    * SEMANTIC MATCHING:
@@ -362,6 +383,22 @@ export class D1ContextRepository implements IContextRepository {
 
     if (!results) return [];
     return results.map(row => this.deserializeCausality(row));
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Delete context by ID (Layer 2: Memory Manager)
+   *
+   * PURPOSE: Permanent removal of expired contexts during pruning
+   *
+   * TECHNICAL IMPLEMENTATION:
+   * - DELETE FROM context_snapshots WHERE id = ?
+   * - Atomic operation
+   * - No cascading effects (no foreign keys)
+   */
+  async delete(id: string): Promise<void> {
+    await this.db.prepare(
+      `DELETE FROM context_snapshots WHERE id = ?`
+    ).bind(id).run();
   }
 
   /**

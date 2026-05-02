@@ -296,6 +296,18 @@ export class ContextService {
   }
 
   /**
+   * 🎯 WAKE INTELLIGENCE: Refresh all stale predictions across all projects (Layer 3)
+   *
+   * PURPOSE: Called by scheduled cron — no project filter, operates globally
+   *
+   * @param staleThreshold - Hours before prediction is stale (default: 24)
+   * @returns Number of contexts updated
+   */
+  async refreshStalePredictions(staleThreshold?: number): Promise<number> {
+    return await this.propagationEngine.refreshAllStalePredictions(staleThreshold);
+  }
+
+  /**
    * 🎯 WAKE INTELLIGENCE: Get propagation statistics for project (Layer 3)
    *
    * PURPOSE: Analytics on prediction quality and patterns
