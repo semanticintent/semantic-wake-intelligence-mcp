@@ -72,5 +72,27 @@ export default {
         headers: { 'Content-Type': 'text/plain' }
       });
     }
-  }
+  },
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Scheduled cron handler — Layer 3 prediction refresh
+   *
+   * PURPOSE: Proactively refresh stale predictions across all projects
+   * so they are ready when agents request them, not computed on-demand.
+   *
+   * TRIGGER: Configured in wrangler.jsonc under triggers.crons
+   * CADENCE: Every 6 hours (recommended: "0 *\/6 * * *")
+   */
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    try {
+      const repository = new D1ContextRepository(env.DB);
+      const aiProvider = new CloudflareAIProvider(env.AI);
+      const contextService = new ContextService(repository, aiProvider);
+
+      const updated = await contextService.refreshStalePredictions();
+      console.log(`[cron] Refreshed ${updated} stale predictions`);
+    } catch (error) {
+      console.error('[cron] Failed to refresh stale predictions:', error);
+    }
+  },
 };

@@ -27,5 +27,9 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	// Scheduled cron: refresh stale Layer 3 predictions every 6 hours
+	"triggers": {
+		"crons": ["0 */6 * * *"]
 	}
 }

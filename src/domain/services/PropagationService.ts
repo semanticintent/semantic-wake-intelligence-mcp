@@ -305,6 +305,45 @@ export class PropagationService {
   }
 
   /**
+   * 🎯 WAKE INTELLIGENCE: Refresh all stale predictions across all projects
+   *
+   * PURPOSE: Background cron job entry point — no project filter needed
+   *
+   * WORKFLOW:
+   * 1. Find all contexts with stale/missing predictions (any project)
+   * 2. Recalculate prediction for each
+   * 3. Persist updated propagation metadata
+   *
+   * SAFETY:
+   * - Bounded limit prevents runaway bulk updates
+   * - Single DB pass for discovery, then per-context updates
+   *
+   * @param staleThreshold - Hours before prediction is stale (default: 24)
+   * @param limit - Maximum contexts to update in one run (default: 500)
+   * @returns Number of contexts updated
+   */
+  async refreshAllStalePredictions(staleThreshold: number = 24, limit: number = 500): Promise<number> {
+    const staleContexts = await this.repository.findStalePredictions(staleThreshold, limit);
+
+    let updateCount = 0;
+    for (const context of staleContexts) {
+      const propagation = await this.predictContext(context);
+
+      await this.repository.updatePropagation(
+        context.id,
+        propagation.predictionScore,
+        propagation.lastPredicted!,
+        propagation.predictedNextAccess,
+        propagation.propagationReason
+      );
+
+      updateCount++;
+    }
+
+    return updateCount;
+  }
+
+  /**
    * 🎯 WAKE INTELLIGENCE: Refresh predictions if stale
    *
    * PURPOSE: Ensure predictions are fresh before using them
