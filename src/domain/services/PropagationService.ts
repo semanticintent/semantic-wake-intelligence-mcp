@@ -21,7 +21,7 @@
  */
 
 import type { IContextRepository } from '../../application/ports/IContextRepository';
-import type { ContextSnapshot, PropagationMetadata } from '../../types';
+import type { ContextSnapshot, PropagationMetadata, ProjectWeights } from '../../types';
 import { ContextSnapshot as ContextSnapshotModel } from '../models/ContextSnapshot';
 import { CausalityService } from './CausalityService';
 
@@ -50,7 +50,7 @@ export class PropagationService {
    * @param context - Context to predict for
    * @returns PropagationMetadata with prediction results
    */
-  async predictContext(context: ContextSnapshot): Promise<PropagationMetadata> {
+  async predictContext(context: ContextSnapshot, weights?: ProjectWeights): Promise<PropagationMetadata> {
     // Convert to domain model if needed
     const contextModel = context instanceof ContextSnapshotModel
       ? context
@@ -62,7 +62,8 @@ export class PropagationService {
     // Calculate composite prediction score
     const predictionScore = ContextSnapshotModel.calculatePropagationScore(
       contextModel,
-      causalStrength
+      causalStrength,
+      weights
     );
 
     // Estimate next access time based on patterns

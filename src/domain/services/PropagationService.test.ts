@@ -16,7 +16,8 @@ import { PropagationService } from './PropagationService';
 import { CausalityService } from './CausalityService';
 import { ContextSnapshot } from '../models/ContextSnapshot';
 import { MemoryTier } from '../../types';
-import type { IContextRepository } from '../../application/ports/IContextRepository';
+import type { IContextRepository, } from '../../application/ports/IContextRepository';
+import type { ProjectWeights } from '../../types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -520,6 +521,47 @@ describe('PropagationService (Layer 3: Future)', () => {
 
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('hv-1');
+    });
+  });
+
+  // ── predictContext() with ProjectWeights ──────────────────────────────────
+
+  describe('predictContext() — weight injection', () => {
+    it('should use default 0.4/0.3/0.3 when no weights passed', async () => {
+      const context = makeContext({ lastAccessed: new Date().toISOString(), accessCount: 0 });
+
+      const defaultResult = await service.predictContext(context);
+      const explicitDefault = await service.predictContext(context, {
+        project: 'p', temporalWeight: 0.4, causalWeight: 0.3, frequencyWeight: 0.3,
+        sampleSize: 0, lastTuned: null,
+      } satisfies ProjectWeights);
+
+      expect(defaultResult.predictionScore).toBeCloseTo(explicitDefault.predictionScore, 5);
+    });
+
+    it('should produce higher score when temporal weight boosted for recently accessed context', async () => {
+      const recent = makeContext({ lastAccessed: new Date(Date.now() - 60_000).toISOString() });
+
+      const defaultResult = await service.predictContext(recent);
+      const temporalBoosted = await service.predictContext(recent, {
+        project: 'p', temporalWeight: 0.6, causalWeight: 0.2, frequencyWeight: 0.2,
+        sampleSize: 30, lastTuned: new Date().toISOString(),
+      } satisfies ProjectWeights);
+
+      // Boosting temporal weight on a recently accessed context lifts the score
+      expect(temporalBoosted.predictionScore).toBeGreaterThan(defaultResult.predictionScore);
+    });
+
+    it('should produce higher score when frequency weight boosted for high-access context', async () => {
+      const highFreq = makeContext({ accessCount: 50, lastAccessed: null });
+
+      const defaultResult = await service.predictContext(highFreq);
+      const freqBoosted = await service.predictContext(highFreq, {
+        project: 'p', temporalWeight: 0.2, causalWeight: 0.2, frequencyWeight: 0.6,
+        sampleSize: 30, lastTuned: new Date().toISOString(),
+      } satisfies ProjectWeights);
+
+      expect(freqBoosted.predictionScore).toBeGreaterThan(defaultResult.predictionScore);
     });
   });
 });
