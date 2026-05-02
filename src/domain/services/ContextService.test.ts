@@ -29,6 +29,8 @@ class MockContextRepository implements IContextRepository {
   updatePropagation = vi.fn();
   findByPredictionScore = vi.fn();
   findStalePredictions = vi.fn();
+  findAll = vi.fn();
+  delete = vi.fn();
 }
 
 class MockAIProvider implements IAIProvider {
