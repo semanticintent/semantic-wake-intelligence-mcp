@@ -174,7 +174,7 @@ export class ContextService {
    * @returns Contexts matching semantic meaning
    */
   async searchContext(input: SearchContextInput): Promise<ContextSnapshot[]> {
-    const results = await this.repository.search(input.query, input.project);
+    const results = await this.semanticSearch(input.query, input.project);
 
     // Layer 2: Track access; Layer 4: Record outcome (both fire-and-forget)
     results.forEach(r => {
@@ -186,7 +186,7 @@ export class ContextService {
       });
     });
 
-    return results.map(r => ContextSnapshot.fromDatabase(r));
+    return results;
   }
 
   /**
@@ -331,6 +331,24 @@ export class ContextService {
    * @param project - Project to analyze
    * @returns Statistics on prediction scores, reasons, accuracy
    */
+  private async semanticSearch(query: string, project?: string): Promise<ContextSnapshot[]> {
+    if (this.vectorRepository) {
+      const vector = await this.aiProvider.generateEmbedding(query);
+      if (vector.length > 0) {
+        const ids = await this.vectorRepository.query(vector, 10, project);
+        if (ids.length > 0) {
+          const snapshots = await Promise.all(ids.map(id => this.repository.findById(id)));
+          return snapshots
+            .filter((s): s is NonNullable<typeof s> => s !== null)
+            .map(s => ContextSnapshot.fromDatabase(s));
+        }
+      }
+    }
+    // Fallback: keyword search
+    const results = await this.repository.search(query, project);
+    return results.map(r => ContextSnapshot.fromDatabase(r));
+  }
+
   private async embedAndUpsert(snapshot: ContextSnapshot): Promise<void> {
     if (!this.vectorRepository) return;
     const vector = await this.aiProvider.generateEmbedding(snapshot.summary);

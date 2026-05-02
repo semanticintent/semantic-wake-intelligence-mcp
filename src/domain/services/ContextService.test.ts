@@ -391,6 +391,89 @@ describe('ContextService Domain Service', () => {
     });
   });
 
+  // ─── Semantic search ───────────────────────────────────────────────────────
+
+  describe('searchContext() — semantic path', () => {
+    const vector = new Array(768).fill(0.1);
+    const mockSnap = {
+      id: 'ctx-vec-1', project: 'p', summary: 'hexagonal arch', source: 'mcp',
+      metadata: null, tags: 'arch', timestamp: new Date().toISOString(),
+      causality: null, memoryTier: 'recent', lastAccessed: null, accessCount: 0,
+      propagation: null,
+    };
+
+    it('should use vector similarity when embeddings and results are available', async () => {
+      const mockVectors = new MockVectorRepository();
+      mockAIProvider.generateEmbedding.mockResolvedValue(vector);
+      mockVectors.query.mockResolvedValue(['ctx-vec-1']);
+      mockRepository.findById.mockResolvedValue(mockSnap);
+      mockRepository.findOutcomesByProject.mockResolvedValue([]);
+      mockRepository.getProjectWeights.mockResolvedValue(null);
+      const svc = new ContextService(mockRepository, mockAIProvider, mockVectors);
+
+      const results = await svc.searchContext({ query: 'ports and adapters' });
+
+      expect(mockVectors.query).toHaveBeenCalledWith(vector, 10, undefined);
+      expect(mockRepository.findById).toHaveBeenCalledWith('ctx-vec-1');
+      expect(mockRepository.search).not.toHaveBeenCalled();
+      expect(results[0].id).toBe('ctx-vec-1');
+    });
+
+    it('should fall back to keyword search when embedding returns empty array', async () => {
+      const mockVectors = new MockVectorRepository();
+      mockAIProvider.generateEmbedding.mockResolvedValue([]);
+      mockRepository.search.mockResolvedValue([mockSnap]);
+      mockRepository.findOutcomesByProject.mockResolvedValue([]);
+      mockRepository.getProjectWeights.mockResolvedValue(null);
+      const svc = new ContextService(mockRepository, mockAIProvider, mockVectors);
+
+      const results = await svc.searchContext({ query: 'hexagonal' });
+
+      expect(mockRepository.search).toHaveBeenCalledWith('hexagonal', undefined);
+      expect(results).toHaveLength(1);
+    });
+
+    it('should fall back to keyword search when Vectorize returns no matches', async () => {
+      const mockVectors = new MockVectorRepository();
+      mockAIProvider.generateEmbedding.mockResolvedValue(vector);
+      mockVectors.query.mockResolvedValue([]);
+      mockRepository.search.mockResolvedValue([mockSnap]);
+      mockRepository.findOutcomesByProject.mockResolvedValue([]);
+      mockRepository.getProjectWeights.mockResolvedValue(null);
+      const svc = new ContextService(mockRepository, mockAIProvider, mockVectors);
+
+      const results = await svc.searchContext({ query: 'hexagonal' });
+
+      expect(mockRepository.search).toHaveBeenCalled();
+      expect(results).toHaveLength(1);
+    });
+
+    it('should use keyword search when no vector repo provided', async () => {
+      mockRepository.search.mockResolvedValue([mockSnap]);
+      mockRepository.findOutcomesByProject.mockResolvedValue([]);
+      mockRepository.getProjectWeights.mockResolvedValue(null);
+
+      await contextService.searchContext({ query: 'hexagonal' });
+
+      expect(mockAIProvider.generateEmbedding).not.toHaveBeenCalled();
+      expect(mockRepository.search).toHaveBeenCalled();
+    });
+
+    it('should pass project filter to vector query', async () => {
+      const mockVectors = new MockVectorRepository();
+      mockAIProvider.generateEmbedding.mockResolvedValue(vector);
+      mockVectors.query.mockResolvedValue([]);
+      mockRepository.search.mockResolvedValue([]);
+      mockRepository.findOutcomesByProject.mockResolvedValue([]);
+      mockRepository.getProjectWeights.mockResolvedValue(null);
+      const svc = new ContextService(mockRepository, mockAIProvider, mockVectors);
+
+      await svc.searchContext({ query: 'arch', project: 'my-project' });
+
+      expect(mockVectors.query).toHaveBeenCalledWith(vector, 10, 'my-project');
+    });
+  });
+
   // ─── Save-time embedding (Semantic Search infrastructure) ──────────────────
 
   describe('saveContext() — embedding', () => {
