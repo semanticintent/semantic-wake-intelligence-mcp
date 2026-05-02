@@ -43,6 +43,9 @@
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest run --coverage"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
 		"@cloudflare/agents": "^0.0.16",
 		"@modelcontextprotocol/sdk": "^1.24.3",
