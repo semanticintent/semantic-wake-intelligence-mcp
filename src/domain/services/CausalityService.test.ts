@@ -31,6 +31,8 @@ class MockContextRepository implements IContextRepository {
   updatePropagation = vi.fn();
   findByPredictionScore = vi.fn();
   findStalePredictions = vi.fn();
+  findAll = vi.fn();
+  delete = vi.fn();
 }
 
 describe('CausalityService (Layer 1: Past)', () => {
