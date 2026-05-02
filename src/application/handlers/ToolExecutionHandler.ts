@@ -78,6 +78,9 @@ export class ToolExecutionHandler {
       case 'get_propagation_stats':
         return this.handleGetPropagationStats(args as { project: string });
 
+      case 'get_learning_stats':
+        return this.handleGetLearningStats(args as { project: string });
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -369,6 +372,26 @@ ${Object.entries(stats.actionTypeCounts)
    *
    * PURPOSE: Analytics on prediction quality and patterns
    */
+  private async handleGetLearningStats(args: { project: string }): Promise<ToolResult> {
+    const stats = await this.contextService.getLearningStats(args.project);
+    const w = stats.currentWeights;
+    const tuned = stats.lastTuned ? new Date(stats.lastTuned).toLocaleString() : 'never';
+
+    const text = `**Meta-Learning Statistics for ${args.project}**
+
+🧠 **Learned Weights** (sample size: ${stats.sampleSize}, last tuned: ${tuned}):
+  - Temporal:  ${(w.temporalWeight * 100).toFixed(1)}%
+  - Causal:    ${(w.causalWeight * 100).toFixed(1)}%
+  - Frequency: ${(w.frequencyWeight * 100).toFixed(1)}%
+
+📊 **Component Averages:**
+  - Avg temporal:  ${stats.avgTemporalComponent.toFixed(3)}
+  - Avg causal:    ${stats.avgCausalComponent.toFixed(3)}
+  - Avg frequency: ${stats.avgFrequencyComponent.toFixed(3)}`;
+
+    return { content: [{ type: "text", text }] };
+  }
+
   private async handleGetPropagationStats(args: { project: string }): Promise<ToolResult> {
     const stats = await this.contextService.getPropagationStats(args.project);
 

@@ -325,4 +325,61 @@ describe('ContextService Domain Service', () => {
       expect(results).toHaveLength(0);
     });
   });
+
+  // ─── Layer 4: Meta-Learning wiring ─────────────────────────────────────────
+
+  const contextWithPropagation = {
+    id: 'ctx-p',
+    project: 'test-project',
+    summary: 'Summary',
+    source: 'mcp',
+    metadata: null,
+    tags: 'tag1',
+    timestamp: new Date(Date.now() - 3_600_000).toISOString(),
+    causality: null,
+    memoryTier: 'recent',
+    lastAccessed: new Date(Date.now() - 3_600_000).toISOString(),
+    accessCount: 3,
+    propagation: {
+      predictionScore: 0.7,
+      lastPredicted: new Date().toISOString(),
+      predictedNextAccess: null,
+      propagationReason: ['recently_accessed'],
+    },
+  };
+
+  describe('loadContext() — Layer 4 outcome recording', () => {
+    it('should fire-and-forget recordOutcome when context has propagation data', async () => {
+      mockRepository.findByProject.mockResolvedValue([contextWithPropagation]);
+      mockRepository.recordPredictionOutcome.mockResolvedValue(undefined);
+
+      await contextService.loadContext({ project: 'test-project', limit: 1 });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockRepository.recordPredictionOutcome).toHaveBeenCalledOnce();
+    });
+
+    it('should not record outcome when context has no propagation', async () => {
+      const noProp = { ...contextWithPropagation, propagation: null };
+      mockRepository.findByProject.mockResolvedValue([noProp]);
+
+      await contextService.loadContext({ project: 'test-project', limit: 1 });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockRepository.recordPredictionOutcome).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getLearningStats()', () => {
+    it('should return zero averages and default weights when no data', async () => {
+      mockRepository.findOutcomesByProject.mockResolvedValue([]);
+      mockRepository.getProjectWeights.mockResolvedValue(null);
+
+      const stats = await contextService.getLearningStats('new-project');
+
+      expect(stats.sampleSize).toBe(0);
+      expect(stats.currentWeights.temporalWeight).toBe(0.4);
+      expect(stats.avgTemporalComponent).toBe(0);
+    });
+  });
 });

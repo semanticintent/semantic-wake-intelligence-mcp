@@ -157,6 +157,17 @@ const TOOL_DEFINITIONS = [
       },
       required: ["project"]
     }
+  },
+  {
+    name: "get_learning_stats",
+    description: "Get Layer 4 meta-learning stats: learned weights per dimension and component averages",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Project identifier" }
+      },
+      required: ["project"]
+    }
   }
 ];
 

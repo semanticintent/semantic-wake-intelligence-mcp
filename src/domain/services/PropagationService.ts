@@ -255,18 +255,15 @@ export class PropagationService {
   async updateProjectPredictions(
     project: string,
     staleThreshold: number = 24,
-    limit: number = 100
+    limit: number = 100,
+    weights?: ProjectWeights
   ): Promise<number> {
-    // Find contexts with stale predictions
     const staleContexts = await this.repository.findStalePredictions(staleThreshold, limit);
-
-    // Filter to specified project
     const projectContexts = staleContexts.filter(ctx => ctx.project === project);
 
-    // Update predictions for each context
     let updateCount = 0;
     for (const context of projectContexts) {
-      const propagation = await this.predictContext(context);
+      const propagation = await this.predictContext(context, weights);
 
       await this.repository.updatePropagation(
         context.id,
