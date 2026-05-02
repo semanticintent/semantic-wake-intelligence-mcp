@@ -98,10 +98,11 @@ export class ContextService {
     // Step 2: Causality Tracking (Layer 1: Past)
     // If causality provided by caller, use it; otherwise create default
     const causality = input.causality || await this.causalityService.recordAction(
-      'conversation', // Default action type
-      `Saved context for project: ${input.project}`, // Default rationale
-      null, // No explicit parent
-      input.project // Enable dependency detection
+      'conversation',
+      `Saved context for project: ${input.project}`,
+      null,
+      input.project,
+      input.crossProject ?? false
     );
 
     // Step 3: Domain Entity Creation - Validate business rules
@@ -231,6 +232,10 @@ export class ContextService {
    */
   async getCausalityStats(project: string) {
     return await this.causalityService.getCausalityStats(project);
+  }
+
+  async getDownstreamDependents(snapshotId: string) {
+    return await this.causalityService.getDownstreamDependents(snapshotId);
   }
 
   /**
