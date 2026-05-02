@@ -11,9 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned - Future Enhancements
 - **Layer 5: Cross-Project Intelligence** - Identify patterns across projects
-- **Semantic Search** - Vector embeddings for meaning-based retrieval
 - **Visualization Tools** - Graph causal chains and memory tiers
 - **Performance Optimizations** - Caching and pre-fetching improvements
+
+---
+
+## [3.3.0] - 2026-05-02 — SEMANTIC SEARCH + CROSS-PROJECT CAUSALITY
+
+Adds vector-powered semantic search via Cloudflare Vectorize and completes cross-project causal dependency tracking.
+
+### Added
+
+#### Semantic Search (Layer 1 / Infrastructure)
+- **Cloudflare Vectorize integration** — `wake-context-embeddings` index (768-dimensional cosine) backed by `@cf/baai/bge-base-en-v1.5`. ([VectorizeRepository.ts](src/infrastructure/adapters/VectorizeRepository.ts))
+- **`IVectorRepository` port** — `upsert(id, vector, project)`, `query(vector, limit, project?)`, `delete(id)`. Swappable adapter for any vector store. ([IVectorRepository.ts](src/application/ports/IVectorRepository.ts))
+- **`IAIProvider.generateEmbedding(text)`** — embedding generation added to AI port. Returns `[]` on failure (graceful degradation). ([IAIProvider.ts](src/application/ports/IAIProvider.ts))
+- **`CloudflareAIProvider.generateEmbedding()`** — runs `@cf/baai/bge-base-en-v1.5` for 768-dim vectors. ([CloudflareAIProvider.ts](src/infrastructure/adapters/CloudflareAIProvider.ts))
+- **`ContextService.saveContext()`** — fire-and-forget embedding on every save (no latency impact). ([ContextService.ts](src/domain/services/ContextService.ts))
+- **`ContextService.searchContext()`** — routes through semantic search first; falls back to `LIKE` keyword search when Vectorize returns no matches. ([ContextService.ts](src/domain/services/ContextService.ts))
+- **`ContextService.reindexProject(project)`** — backfills embeddings for all existing contexts in a project. ([ContextService.ts](src/domain/services/ContextService.ts))
+- **`reindex_project` MCP tool** — run once to enable semantic search on historical snapshots.
+- **`MCP_SECRET` Bearer token auth** — all non-OPTIONS requests require `Authorization: Bearer <token>`. ([index.ts](src/index.ts))
+
+#### Cross-Project Causality (Layer 1)
+- **`IContextRepository.findRecentAcrossProjects(beforeTimestamp, hoursBack)`** — temporal dependency scan with no project filter. ([IContextRepository.ts](src/application/ports/IContextRepository.ts))
+- **`D1ContextRepository.findRecentAcrossProjects()`** — `WHERE timestamp >= ? AND timestamp < ?` (no project clause), ordered newest first. ([D1ContextRepository.ts](src/infrastructure/adapters/D1ContextRepository.ts))
+- **`CausalityService.detectDependencies(allProjects?)`** — `allProjects: true` routes to `findRecentAcrossProjects`. ([CausalityService.ts](src/domain/services/CausalityService.ts))
+- **`CausalityService.recordAction(allProjects?)`** — threads `allProjects` flag to dependency detection. ([CausalityService.ts](src/domain/services/CausalityService.ts))
+- **`IContextRepository.findDependents(contextId)`** — `WHERE caused_by = ?` ordered by `timestamp ASC`. ([IContextRepository.ts](src/application/ports/IContextRepository.ts))
+- **`D1ContextRepository.findDependents()`** — native column query, no JSON extraction needed. ([D1ContextRepository.ts](src/infrastructure/adapters/D1ContextRepository.ts))
+- **`CausalityService.getDownstreamDependents(snapshotId)`** — BFS traversal of all transitive children with visited-set cycle guard. Works across projects. ([CausalityService.ts](src/domain/services/CausalityService.ts))
+- **`save_context` `crossProject` field** — optional boolean; when `true`, dependency detection queries all projects. ([types.ts](src/types.ts))
+- **`get_cross_project_dependents` MCP tool** — returns all downstream contexts (any project) caused by a given snapshot.
+
+### Counts
+- Tests: 197 → **221** (+24)
+- MCP tools: 12 → **15** (`reindex_project`, `get_cross_project_dependents` added; `search_context` upgraded to semantic)
 
 ---
 
