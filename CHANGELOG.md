@@ -19,6 +19,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.0] - 2026-05-01 🔧 HARDENING PASS — LAYER 2 GAPS CLOSED + CRON REFRESH
+
+This release closes two functional TODOs that left Layer 2 partially broken and adds proactive Layer 3 prediction refresh via Cloudflare cron triggers.
+
+### Fixed
+
+- **`pruneExpiredContexts()` was a no-op** — returned a count but never deleted anything. Now calls `repository.delete()` for each EXPIRED context. ([MemoryManagerService.ts](src/domain/services/MemoryManagerService.ts))
+- **`recalculateAllTiers()` without project filter returned empty** — the cross-project path was `[]` (TODO). Now calls `repository.findAll()`. ([MemoryManagerService.ts](src/domain/services/MemoryManagerService.ts))
+
+### Added
+
+- **`IContextRepository.findAll(limit?)`** — load all contexts across all projects (bounded). Enables cross-project bulk operations. ([IContextRepository.ts](src/application/ports/IContextRepository.ts))
+- **`IContextRepository.delete(id)`** — permanent removal of a single context. Contract: only called from pruning code on EXPIRED tier. ([IContextRepository.ts](src/application/ports/IContextRepository.ts))
+- **`D1ContextRepository.findAll()`** — `SELECT * ORDER BY timestamp DESC LIMIT ?` ([D1ContextRepository.ts](src/infrastructure/adapters/D1ContextRepository.ts))
+- **`D1ContextRepository.delete()`** — `DELETE FROM context_snapshots WHERE id = ?` ([D1ContextRepository.ts](src/infrastructure/adapters/D1ContextRepository.ts))
+- **`PropagationService.refreshAllStalePredictions(staleThreshold?, limit?)`** — cross-project stale prediction refresh in a single pass. Entry point for the cron handler. ([PropagationService.ts](src/domain/services/PropagationService.ts))
+- **`ContextService.refreshStalePredictions(staleThreshold?)`** — exposes cross-project refresh at the service boundary. ([ContextService.ts](src/domain/services/ContextService.ts))
+- **Scheduled cron handler in `index.ts`** — `scheduled()` export runs every 6 hours to proactively refresh stale Layer 3 predictions across all projects. ([index.ts](src/index.ts))
+- **`wrangler.jsonc.example`** — `triggers.crons` entry documents cron configuration (`"0 */6 * * *"`).
+- **`MemoryManagerService.test.ts`** — new test file, 10 tests covering `recalculateAllTiers()` (with + without project), `pruneExpiredContexts()` (now actually deletes), and `trackAccess()`.
+- **6 new tests in `D1ContextRepository.test.ts`** — covering `findAll()` and `delete()`.
+
+### Changed
+
+- Total test count: 114 → **124 tests**
+- Version: 3.0.0 → 3.1.0
+
+---
+
 ## [3.0.0] - 2025-10-17 🧠 WAKE INTELLIGENCE BRAIN COMPLETE
 
 ### Major: Layer 3 (Propagation Engine) Implementation

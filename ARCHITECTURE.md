@@ -41,6 +41,7 @@ The Wake Intelligence brain is a temporal intelligence system that enables AI ag
 │  │ • calculateCausalStrength()                         │    │
 │  │ • estimateNextAccess()                              │    │
 │  │ • updateProjectPredictions()                        │    │
+│  │ • refreshAllStalePredictions()                      │    │
 │  │ • getHighValueContexts()                            │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                            ▲                                  │
@@ -354,11 +355,21 @@ propagation_reason TEXT          -- JSON array of prediction reasons
      return findByPredictionScore(minScore, project, limit)
    ```
 
+3. **Refresh All Stale Predictions (cross-project, used by cron):**
+   ```typescript
+   refreshAllStalePredictions(staleThreshold=24, limit=500):
+     staleContexts = findStalePredictions(staleThreshold, limit)
+     for each context in staleContexts:
+       propagation = predictContext(context)
+       updatePropagation(context.id, propagation)
+     return staleContexts.length
+   ```
+
 **Benefits:**
 - ✅ Proactive pre-fetching optimization
 - ✅ Pattern-based next access estimation
 - ✅ Observable prediction reasoning
-- ✅ Staleness management with lazy refresh
+- ✅ Staleness management with lazy refresh and scheduled background refresh
 
 ---
 
@@ -766,6 +777,17 @@ if (hoursSincePrediction > staleThreshold) {
 }
 ```
 
+### Scheduled Background Refresh (Cron)
+A Cloudflare scheduled cron trigger proactively refreshes stale predictions every 6 hours across all projects, so predictions are ready when agents request them rather than computed on-demand:
+```typescript
+// Configured in wrangler.jsonc: "triggers": { "crons": ["0 */6 * * *"] }
+async scheduled(event, env, ctx) {
+  const contextService = new ContextService(repository, aiProvider)
+  const updated = await contextService.refreshStalePredictions()
+  console.log(`[cron] Refreshed ${updated} stale predictions`)
+}
+```
+
 ### Fire-and-Forget Access Tracking
 Layer 2 access tracking is fire-and-forget to avoid blocking responses:
 ```typescript
@@ -781,7 +803,7 @@ results.forEach(r => {
 
 ## Testing Strategy
 
-### Unit Tests (70+ tests)
+### Unit Tests (124 tests)
 - **Domain Layer:** Pure logic tests (no mocks needed for calculations)
 - **Application Layer:** Mock domain services
 - **Infrastructure Layer:** Mock external dependencies (D1, AI)
@@ -794,8 +816,14 @@ results.forEach(r => {
 Tests live next to source files:
 ```
 src/domain/services/
+├── CausalityService.ts
+├── CausalityService.test.ts
+├── ContextService.ts
+├── ContextService.test.ts
+├── MemoryManagerService.ts
+├── MemoryManagerService.test.ts
 ├── PropagationService.ts
-└── PropagationService.test.ts
+└── PropagationService.test.ts (planned)
 ```
 
 ---
