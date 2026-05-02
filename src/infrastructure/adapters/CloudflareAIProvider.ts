@@ -92,6 +92,18 @@ export class CloudflareAIProvider implements IAIProvider {
    * Fallback truncation when AI unavailable.
    * Preserves beginning (most important semantic content).
    */
+  async generateEmbedding(text: string): Promise<number[]> {
+    try {
+      if (this.ai) {
+        const result = await this.ai.run('@cf/baai/bge-base-en-v1.5', { text: [text] });
+        return (result as { data: number[][] }).data[0] ?? [];
+      }
+    } catch (error) {
+      console.error('Embedding generation failed:', error);
+    }
+    return [];
+  }
+
   private truncateFallback(content: string): string {
     return content.slice(0, 200) + '...';
   }

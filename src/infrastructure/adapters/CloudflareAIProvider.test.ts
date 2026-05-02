@@ -170,6 +170,37 @@ describe('CloudflareAIProvider', () => {
     });
   });
 
+  describe('generateEmbedding()', () => {
+    it('should return 768-dimensional vector from AI model', async () => {
+      const vector = new Array(768).fill(0.1);
+      mockAi.run.mockResolvedValue({ data: [vector] });
+
+      const result = await provider.generateEmbedding('hexagonal architecture');
+
+      expect(mockAi.run).toHaveBeenCalledWith('@cf/baai/bge-base-en-v1.5', {
+        text: ['hexagonal architecture'],
+      });
+      expect(result).toEqual(vector);
+      expect(result).toHaveLength(768);
+    });
+
+    it('should return empty array when AI fails', async () => {
+      mockAi.run.mockRejectedValue(new Error('embedding service down'));
+
+      const result = await provider.generateEmbedding('test');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array when AI binding is null', async () => {
+      const noAi = new CloudflareAIProvider(null as unknown as Ai);
+
+      const result = await noAi.generateEmbedding('test');
+
+      expect(result).toEqual([]);
+    });
+  });
+
   describe('Graceful Degradation', () => {
     it('should never throw errors - always return fallback', async () => {
       // Arrange

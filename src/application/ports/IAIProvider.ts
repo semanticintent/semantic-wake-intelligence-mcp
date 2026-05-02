@@ -56,4 +56,15 @@ export interface IAIProvider {
    * @returns Comma-separated tags (3-5 semantic markers)
    */
   generateTags(content: string): Promise<string>;
+
+  /**
+   * 🎯 SEMANTIC INTENT: Encode text as a semantic vector
+   *
+   * PURPOSE: Produce a dense embedding for meaning-based similarity search.
+   * Returns empty array on failure — caller must check length before upserting.
+   *
+   * @param text - Text to embed (summary or query)
+   * @returns 768-dimensional float vector, or [] on failure
+   */
+  generateEmbedding(text: string): Promise<number[]>;
 }
