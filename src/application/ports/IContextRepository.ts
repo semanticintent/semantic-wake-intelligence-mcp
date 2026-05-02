@@ -109,6 +109,18 @@ export interface IContextRepository {
   findRecent(project: string, beforeTimestamp: string, hoursBack: number): Promise<ContextSnapshot[]>;
 
   /**
+   * 🎯 WAKE INTELLIGENCE: Find recent contexts across ALL projects (Layer 1: Cross-project causality)
+   *
+   * PURPOSE: Detect cross-project dependencies based on temporal proximity.
+   * Intentionally has no project filter — returns all recent work regardless of project.
+   *
+   * @param beforeTimestamp - Reference timestamp (ISO string)
+   * @param hoursBack - How far back to search
+   * @returns Recent contexts from all projects, ordered newest first
+   */
+  findRecentAcrossProjects(beforeTimestamp: string, hoursBack: number): Promise<ContextSnapshot[]>;
+
+  /**
    * 🎯 WAKE INTELLIGENCE: Update memory tier (Layer 2: Memory Manager)
    *
    * PURPOSE: Reclassify snapshot based on current age

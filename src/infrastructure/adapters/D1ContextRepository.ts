@@ -198,21 +198,35 @@ export class D1ContextRepository implements IContextRepository {
     beforeTimestamp: string,
     hoursBack: number
   ): Promise<ContextSnapshot[]> {
-    // Calculate cutoff timestamp
-    const beforeDate = new Date(beforeTimestamp);
-    const cutoffDate = new Date(beforeDate.getTime() - hoursBack * 60 * 60 * 1000);
-    const cutoffTimestamp = cutoffDate.toISOString();
-
+    const { cutoff } = this.timestampWindow(beforeTimestamp, hoursBack);
     const { results } = await this.db.prepare(
       `SELECT * FROM context_snapshots
        WHERE project = ?
-       AND timestamp >= ?
-       AND timestamp < ?
+       AND timestamp >= ? AND timestamp < ?
        ORDER BY timestamp DESC`
-    ).bind(project, cutoffTimestamp, beforeTimestamp).all();
-
+    ).bind(project, cutoff, beforeTimestamp).all();
     if (!results) return [];
     return results.map(row => this.deserializeCausality(row));
+  }
+
+  async findRecentAcrossProjects(
+    beforeTimestamp: string,
+    hoursBack: number
+  ): Promise<ContextSnapshot[]> {
+    const { cutoff } = this.timestampWindow(beforeTimestamp, hoursBack);
+    const { results } = await this.db.prepare(
+      `SELECT * FROM context_snapshots
+       WHERE timestamp >= ? AND timestamp < ?
+       ORDER BY timestamp DESC`
+    ).bind(cutoff, beforeTimestamp).all();
+    if (!results) return [];
+    return results.map(row => this.deserializeCausality(row));
+  }
+
+  private timestampWindow(beforeTimestamp: string, hoursBack: number) {
+    const before = new Date(beforeTimestamp);
+    const cutoff = new Date(before.getTime() - hoursBack * 3_600_000).toISOString();
+    return { cutoff };
   }
 
   /**
