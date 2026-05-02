@@ -40,6 +40,7 @@ import { ContextSnapshot } from '../models/ContextSnapshot';
 import { CausalityService } from './CausalityService';
 import { MemoryManagerService } from './MemoryManagerService';
 import { PropagationService } from './PropagationService';
+import { MetaLearningService } from './MetaLearningService';
 
 /**
  * Domain service for context management operations.
@@ -54,17 +55,16 @@ export class ContextService {
   private readonly causalityService: CausalityService;
   private readonly memoryManager: MemoryManagerService;
   private readonly propagationEngine: PropagationService;
+  private readonly metaLearning: MetaLearningService;
 
   constructor(
     private readonly repository: IContextRepository,
     private readonly aiProvider: IAIProvider
   ) {
-    // Initialize Layer 1: Causality Engine
     this.causalityService = new CausalityService(repository);
-    // Initialize Layer 2: Memory Manager
     this.memoryManager = new MemoryManagerService(repository);
-    // Initialize Layer 3: Propagation Engine
     this.propagationEngine = new PropagationService(repository, this.causalityService);
+    this.metaLearning = new MetaLearningService(repository);
   }
 
   /**
@@ -138,11 +138,13 @@ export class ContextService {
 
     const results = await this.repository.findByProject(input.project, boundedLimit);
 
-    // Layer 2: Track access for each retrieved context
-    // Fire-and-forget (don't await) to avoid blocking response
+    // Layer 2: Track access; Layer 4: Record outcome (both fire-and-forget)
     results.forEach(r => {
       this.memoryManager.trackAccess(r.id).catch(err => {
         console.error(`Failed to track access for ${r.id}:`, err);
+      });
+      this.metaLearning.recordOutcome(r).catch(err => {
+        console.error(`Failed to record outcome for ${r.id}:`, err);
       });
     });
 
@@ -167,11 +169,13 @@ export class ContextService {
   async searchContext(input: SearchContextInput): Promise<ContextSnapshot[]> {
     const results = await this.repository.search(input.query, input.project);
 
-    // Layer 2: Track access for each search result
-    // Fire-and-forget (don't await) to avoid blocking response
+    // Layer 2: Track access; Layer 4: Record outcome (both fire-and-forget)
     results.forEach(r => {
       this.memoryManager.trackAccess(r.id).catch(err => {
         console.error(`Failed to track access for ${r.id}:`, err);
+      });
+      this.metaLearning.recordOutcome(r).catch(err => {
+        console.error(`Failed to record outcome for ${r.id}:`, err);
       });
     });
 
@@ -273,7 +277,12 @@ export class ContextService {
    * @returns Number of contexts updated
    */
   async updatePredictions(project: string, staleThreshold?: number) {
-    return await this.propagationEngine.updateProjectPredictions(project, staleThreshold);
+    const weights = await this.metaLearning.getProjectWeights(project);
+    return await this.propagationEngine.updateProjectPredictions(project, staleThreshold, undefined, weights);
+  }
+
+  async getLearningStats(project: string) {
+    return await this.metaLearning.getLearningStats(project);
   }
 
   /**
