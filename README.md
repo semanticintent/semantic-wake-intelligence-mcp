@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-163%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
+[![Tests](https://img.shields.io/badge/tests-197%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
@@ -347,9 +347,12 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 - **get_high_value_contexts**: Retrieve contexts most likely to be accessed next
 - **get_propagation_stats**: Analytics on prediction quality and patterns
 
+### Wake Intelligence Layer 4: Meta-Learning (Adaptive)
+- **get_learning_stats**: View learned per-project weights and component averages
+
 ## 🧪 Testing
 
-This project includes comprehensive unit tests with **163 tests** covering all architectural layers.
+This project includes comprehensive unit tests with **197 tests** covering all architectural layers.
 
 ### Run Tests
 
@@ -369,9 +372,9 @@ npm run test:coverage
 
 ### Test Coverage
 
-- ✅ **Domain Layer**: 111 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService, PropagationService)
+- ✅ **Domain Layer**: 137 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService, PropagationService, MetaLearningService)
 - ✅ **Application Layer**: 10 tests (ToolExecutionHandler, MCP tool dispatch)
-- ✅ **Infrastructure Layer**: 30 tests (D1Repository, CloudflareAIProvider with fallbacks)
+- ✅ **Infrastructure Layer**: 38 tests (D1Repository, CloudflareAIProvider with fallbacks)
 - ✅ **Presentation Layer**: 12 tests (MCPRouter, CORS, error handling)
 
 ### Test Structure
@@ -392,7 +395,9 @@ src/
 │       ├── MemoryManagerService.ts
 │       ├── MemoryManagerService.test.ts
 │       ├── PropagationService.ts
-│       └── PropagationService.test.ts
+│       ├── PropagationService.test.ts
+│       ├── MetaLearningService.ts
+│       └── MetaLearningService.test.ts
 ├── application/
 │   └── handlers/
 │       ├── ToolExecutionHandler.ts
