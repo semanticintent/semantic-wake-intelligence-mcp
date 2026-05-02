@@ -168,6 +168,17 @@ const TOOL_DEFINITIONS = [
       },
       required: ["project"]
     }
+  },
+  {
+    name: "reindex_project",
+    description: "Backfill semantic embeddings for all existing contexts in a project — run once to enable semantic search on historical snapshots",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Project identifier" }
+      },
+      required: ["project"]
+    }
   }
 ];
 

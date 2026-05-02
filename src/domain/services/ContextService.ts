@@ -292,6 +292,20 @@ export class ContextService {
     return await this.metaLearning.getLearningStats(project);
   }
 
+  async reindexProject(project: string): Promise<number> {
+    if (!this.vectorRepository) return 0;
+    const contexts = await this.repository.findByProject(project, 1000);
+    let indexed = 0;
+    for (const context of contexts) {
+      const vector = await this.aiProvider.generateEmbedding(context.summary);
+      if (vector.length > 0) {
+        await this.vectorRepository.upsert(context.id, vector, project);
+        indexed++;
+      }
+    }
+    return indexed;
+  }
+
   /**
    * 🎯 WAKE INTELLIGENCE: Get high-value contexts for pre-fetching (Layer 3)
    *
