@@ -81,6 +81,9 @@ export class ToolExecutionHandler {
       case 'get_learning_stats':
         return this.handleGetLearningStats(args as { project: string });
 
+      case 'reindex_project':
+        return this.handleReindexProject(args as { project: string });
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -390,6 +393,18 @@ ${Object.entries(stats.actionTypeCounts)
   - Avg frequency: ${stats.avgFrequencyComponent.toFixed(3)}`;
 
     return { content: [{ type: "text", text }] };
+  }
+
+  private async handleReindexProject(args: { project: string }): Promise<ToolResult> {
+    const count = await this.contextService.reindexProject(args.project);
+    return {
+      content: [{
+        type: "text",
+        text: count > 0
+          ? `Reindexed ${count} contexts for project "${args.project}" — semantic search now covers all existing snapshots.`
+          : `No contexts reindexed for "${args.project}". Either no contexts exist or the vector index is not configured.`
+      }]
+    };
   }
 
   private async handleGetPropagationStats(args: { project: string }): Promise<ToolResult> {
