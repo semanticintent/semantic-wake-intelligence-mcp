@@ -47,6 +47,14 @@ import type { Env } from './types';
  */
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Auth check — skip for OPTIONS (CORS preflight)
+    if (request.method !== 'OPTIONS') {
+      const auth = request.headers.get('Authorization');
+      if (!env.MCP_SECRET || auth !== `Bearer ${env.MCP_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+    }
+
     try {
       // LAYER 1: Infrastructure - Technical adapters
       const repository = new D1ContextRepository(env.DB);
