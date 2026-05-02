@@ -533,6 +533,71 @@ describe('D1ContextRepository', () => {
     });
   });
 
+  describe('findDependents()', () => {
+    it('should query WHERE caused_by = ? ORDER BY timestamp ASC', async () => {
+      const mockStatement = new MockD1PreparedStatement();
+      const bindSpy = vi.spyOn(mockStatement, 'bind');
+      vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: [] });
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      await repository.findDependents('parent-id');
+
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('caused_by = ?')
+      );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('timestamp ASC')
+      );
+      expect(bindSpy).toHaveBeenCalledWith('parent-id');
+    });
+
+    it('should return empty array when no dependents exist', async () => {
+      const mockStatement = new MockD1PreparedStatement();
+      vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: [] });
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      const results = await repository.findDependents('no-children-id');
+
+      expect(results).toHaveLength(0);
+    });
+
+    it('should transform dependent rows to ContextSnapshot objects', async () => {
+      const mockResults = [
+        {
+          id: 'child-1',
+          project: 'project-b',
+          summary: 'Child context',
+          source: 'mcp',
+          metadata: null,
+          tags: 'child',
+          timestamp: '2025-10-16T12:00:00.000Z',
+          action_type: 'decision',
+          rationale: 'Based on parent',
+          dependencies: '[]',
+          caused_by: 'parent-id',
+          memory_tier: 'active',
+          last_accessed: null,
+          access_count: 0,
+          prediction_score: null,
+          last_predicted: null,
+          predicted_next_access: null,
+          propagation_reason: null,
+        },
+      ];
+
+      const mockStatement = new MockD1PreparedStatement();
+      vi.spyOn(mockStatement, 'all').mockResolvedValue({ results: mockResults });
+      mockDb.prepare.mockReturnValue(mockStatement);
+
+      const results = await repository.findDependents('parent-id');
+
+      expect(results).toHaveLength(1);
+      expect(results[0].id).toBe('child-1');
+      expect(results[0].project).toBe('project-b');
+      expect(results[0].causality?.causedBy).toBe('parent-id');
+    });
+  });
+
   describe('Layer 2: Memory Manager Methods', () => {
     describe('updateMemoryTier()', () => {
       it('should execute UPDATE statement with tier and id', async () => {

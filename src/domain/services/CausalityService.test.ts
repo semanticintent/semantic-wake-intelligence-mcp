@@ -24,6 +24,7 @@ class MockContextRepository implements IContextRepository {
   findById = vi.fn();
   findRecent = vi.fn()
   findRecentAcrossProjects = vi.fn().mockResolvedValue([]);
+  findDependents = vi.fn().mockResolvedValue([]);
   findByProject = vi.fn();
   search = vi.fn();
   updateMemoryTier = vi.fn();
@@ -526,6 +527,93 @@ describe('CausalityService (Layer 1: Past)', () => {
 
       // Assert
       expect(valid).toBe(false);
+    });
+  });
+
+  describe('getDownstreamDependents()', () => {
+    it('should return direct children of a snapshot', async () => {
+      const root = ContextSnapshot.create({ project: 'p', summary: 'Root', tags: 't' });
+      const childA = ContextSnapshot.create({ project: 'p', summary: 'Child A', tags: 't',
+        causality: { actionType: 'decision', rationale: 'r', dependencies: [], causedBy: root.id } });
+      const childB = ContextSnapshot.create({ project: 'q', summary: 'Child B', tags: 't',
+        causality: { actionType: 'file_edit', rationale: 'r', dependencies: [], causedBy: root.id } });
+
+      mockRepo.findDependents = vi.fn()
+        .mockImplementation((id: string) => {
+          if (id === root.id) return Promise.resolve([childA, childB]);
+          return Promise.resolve([]);
+        });
+
+      const result = await service.getDownstreamDependents(root.id);
+
+      expect(result).toHaveLength(2);
+      expect(result.map(s => s.id)).toContain(childA.id);
+      expect(result.map(s => s.id)).toContain(childB.id);
+    });
+
+    it('should recursively traverse grandchildren', async () => {
+      const root = ContextSnapshot.create({ project: 'p', summary: 'Root', tags: 't' });
+      const child = ContextSnapshot.create({ project: 'p', summary: 'Child', tags: 't',
+        causality: { actionType: 'decision', rationale: 'r', dependencies: [], causedBy: root.id } });
+      const grandchild = ContextSnapshot.create({ project: 'p', summary: 'Grandchild', tags: 't',
+        causality: { actionType: 'file_edit', rationale: 'r', dependencies: [], causedBy: child.id } });
+
+      mockRepo.findDependents = vi.fn()
+        .mockImplementation((id: string) => {
+          if (id === root.id) return Promise.resolve([child]);
+          if (id === child.id) return Promise.resolve([grandchild]);
+          return Promise.resolve([]);
+        });
+
+      const result = await service.getDownstreamDependents(root.id);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe(child.id);
+      expect(result[1].id).toBe(grandchild.id);
+    });
+
+    it('should return empty array when snapshot has no dependents', async () => {
+      const snapshot = ContextSnapshot.create({ project: 'p', summary: 'Leaf', tags: 't' });
+      mockRepo.findDependents = vi.fn().mockResolvedValue([]);
+
+      const result = await service.getDownstreamDependents(snapshot.id);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should not revisit already-seen nodes (cycle guard)', async () => {
+      const a = ContextSnapshot.create({ project: 'p', summary: 'A', tags: 't' });
+      const b = ContextSnapshot.create({ project: 'p', summary: 'B', tags: 't' });
+
+      mockRepo.findDependents = vi.fn()
+        .mockImplementation((id: string) => {
+          if (id === a.id) return Promise.resolve([b]);
+          if (id === b.id) return Promise.resolve([a]); // cycle: B → A
+          return Promise.resolve([]);
+        });
+
+      const result = await service.getDownstreamDependents(a.id);
+
+      // Should find B but not loop back to A (already visited as root)
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(b.id);
+    });
+
+    it('should traverse cross-project dependents', async () => {
+      const root = ContextSnapshot.create({ project: 'project-a', summary: 'Root in A', tags: 't' });
+      const crossChild = ContextSnapshot.create({ project: 'project-b', summary: 'Child in B', tags: 't',
+        causality: { actionType: 'decision', rationale: 'cross-project', dependencies: [], causedBy: root.id } });
+
+      mockRepo.findDependents = vi.fn()
+        .mockImplementation((id: string) => {
+          if (id === root.id) return Promise.resolve([crossChild]);
+          return Promise.resolve([]);
+        });
+
+      const result = await service.getDownstreamDependents(root.id);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].project).toBe('project-b');
     });
   });
 
