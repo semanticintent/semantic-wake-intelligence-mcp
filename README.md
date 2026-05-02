@@ -12,9 +12,9 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant-blue.svg)](CODE_OF_CONDUCT.md)
 
-> **Wake Intelligence: 3-Layer Temporal Intelligence for AI Agents**
+> **Wake Intelligence: 4-Layer Temporal Intelligence for AI Agents**
 >
-> A production-ready Model Context Protocol (MCP) server implementing a temporal intelligence "brain" with three layers: **Past** (causality tracking), **Present** (memory management), and **Future** (predictive pre-fetching).
+> A production-ready Model Context Protocol (MCP) server implementing a temporal intelligence "brain" with four layers: **Past** (causality tracking), **Present** (memory management), **Future** (predictive pre-fetching), and **Adaptive** (meta-learning — per-project weight tuning).
 >
 > Reference implementation of Semantic Intent as Single Source of Truth patterns with hexagonal architecture.
 
@@ -33,7 +33,7 @@
 
 ## 🧠 Wake Intelligence Brain Architecture
 
-Wake Intelligence implements a **3-layer temporal intelligence system** that learns from the past, manages the present, and predicts the future:
+Wake Intelligence implements a **4-layer temporal intelligence system** that learns from the past, manages the present, predicts the future, and continuously adapts its own prediction weights:
 
 ### **Layer 1: Causality Engine (Past - WHY)**
 Tracks **WHY** contexts were created and their causal relationships.
@@ -99,6 +99,13 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 │                   WAKE INTELLIGENCE BRAIN                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
+│  LAYER 4: META-LEARNING ENGINE (Adaptive - HOW WELL)        │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • Tunes per-project prediction weights              │    │
+│  │ • Learns from access outcomes (≥20 samples)         │    │
+│  │ • Clamps weights [0.1, 0.6] — no dimension dominates│    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
 │  LAYER 3: PROPAGATION ENGINE (Future - WHAT)                │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │ • Predicts WHAT will be needed next                 │    │
@@ -116,7 +123,7 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 │  LAYER 1: CAUSALITY ENGINE (Past - WHY)                     │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │ • Tracks WHY contexts were created                  │    │
-│  │ • Causal chain tracking                             │    │
+│  │ • Causal chain tracking + cross-project dependents  │    │
 │  │ • Dependency auto-detection                         │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                                                               │
@@ -124,11 +131,11 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 ```
 
 **Benefits:**
-- 🎯 **Learn from the past**: Understand causal relationships
+- 🎯 **Learn from the past**: Understand causal relationships across projects
 - 🎯 **Optimize the present**: Manage memory intelligently
 - 🎯 **Predict the future**: Pre-fetch what's needed next
+- 🎯 **Adapt continuously**: Per-project weights improve with every access
 - 🎯 **Observable reasoning**: Every decision is explainable
-- 🎯 **Deterministic algorithms**: No black-box predictions
 
 ## 🎯 What Makes This Different
 

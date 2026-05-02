@@ -2,7 +2,7 @@
 
 ## Overview
 
-Wake Intelligence is a production-ready Model Context Protocol (MCP) server implementing a **3-layer temporal intelligence system** that gives AI agents memory with understanding of **Past**, **Present**, and **Future**.
+Wake Intelligence is a production-ready Model Context Protocol (MCP) server implementing a **4-layer temporal intelligence system** that gives AI agents memory with understanding of **Past**, **Present**, **Future**, and **Adaptive** self-improvement.
 
 This document describes the complete architectural design, from the temporal intelligence brain to the hexagonal infrastructure layers.
 
@@ -10,10 +10,11 @@ This document describes the complete architectural design, from the temporal int
 
 ## Table of Contents
 
-- [Wake Intelligence Brain (3-Layer System)](#wake-intelligence-brain-3-layer-system)
+- [Wake Intelligence Brain (4-Layer System)](#wake-intelligence-brain-4-layer-system)
   - [Layer 1: Causality Engine (Past)](#layer-1-causality-engine-past---why)
   - [Layer 2: Memory Manager (Present)](#layer-2-memory-manager-present---how)
   - [Layer 3: Propagation Engine (Future)](#layer-3-propagation-engine-future---what)
+  - [Layer 4: Meta-Learning Engine (Adaptive)](#layer-4-meta-learning-engine-adaptive---how-well)
 - [Hexagonal Architecture](#hexagonal-architecture)
 - [Data Flow](#data-flow)
 - [Database Schema](#database-schema)
@@ -22,12 +23,13 @@ This document describes the complete architectural design, from the temporal int
 
 ---
 
-## Wake Intelligence Brain (3-Layer System)
+## Wake Intelligence Brain (4-Layer System)
 
 The Wake Intelligence brain is a temporal intelligence system that enables AI agents to:
 1. **Learn from the past** - Understand causal relationships (Layer 1)
 2. **Optimize the present** - Manage memory intelligently (Layer 2)
 3. **Predict the future** - Pre-fetch what's needed next (Layer 3)
+4. **Adapt continuously** - Tune per-project prediction weights from observed access patterns (Layer 4)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -868,7 +870,7 @@ interface CrossProjectPattern {
 Wake Intelligence demonstrates how to build a production-ready temporal intelligence system for AI agents with:
 
 1. **Clear architectural layers** - Domain, Application, Infrastructure, Presentation
-2. **3-layer brain system** - Past (causality), Present (memory), Future (prediction)
+2. **4-layer brain system** - Past (causality), Present (memory), Future (prediction), Adaptive (meta-learning)
 3. **Observable reasoning** - Every decision is explainable
 4. **Semantic intent preservation** - Meaning maintained through all transformations
 5. **Deterministic algorithms** - No black-box ML, full transparency

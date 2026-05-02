@@ -3,19 +3,19 @@
 **System**: Semantic Wake Intelligence MCP (formerly semantic-context-mcp)
 **Domain**: wakeiqx.com
 **Dimension**: Time (Memory, Continuity, Causality)
-**Brain Layers**: 3 (Temporal Flow Architecture)
+**Brain Layers**: 4 (Temporal Flow + Adaptive Learning)
 
 ---
 
 ## Abstract
 
-Wake Intelligence embodies the **Time dimension** of the Cormorant Trinity framework. Unlike ChirpIQX's 7-layer acoustic processing (Sound) or PerchIQX's 4-layer spatial hierarchy (Space), Wake Intelligence uses a **3-layer temporal flow architecture** that mirrors the fundamental structure of time itself: **Past → Present → Future** (Causality → Persistence → Propagation).
+Wake Intelligence embodies the **Time dimension** of the Cormorant Trinity framework. Unlike ChirpIQX's 7-layer acoustic processing (Sound) or PerchIQX's 4-layer spatial hierarchy (Space), Wake Intelligence uses a **4-layer temporal flow architecture**: **Past → Present → Future → Adaptive** (Causality → Persistence → Propagation → Meta-Learning).
 
 This document maps the current `semantic-context-mcp` implementation to the Wake Intelligence brain framework and identifies enhancements needed to fully realize the temporal intelligence pattern.
 
 ---
 
-## 1. The 3-Layer Temporal Brain
+## 1. The 4-Layer Temporal Brain
 
 ### Layer Architecture
 
