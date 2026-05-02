@@ -66,7 +66,11 @@ graph TB
 
 **Components:**
 - **ContextSnapshot** - Domain entity with validation rules
-- **ContextService** - Core business operations
+- **ContextService** - Core business orchestration (coordinates all 4 layers)
+- **CausalityService** - Layer 1: causal chain tracking (Past)
+- **MemoryManagerService** - Layer 2: temporal tier classification (Present)
+- **PropagationService** - Layer 3: prediction scoring (Future)
+- **MetaLearningService** - Layer 4: adaptive weight tuning (Self-Improving)
 
 **Principles:**
 - ✅ No infrastructure dependencies

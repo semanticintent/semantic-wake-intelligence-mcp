@@ -10,12 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned - Future Enhancements
-- **Layer 4: Meta-Learning** - Learn from prediction accuracy to tune weights
 - **Layer 5: Cross-Project Intelligence** - Identify patterns across projects
-- **Advanced Analytics** - Prediction accuracy tracking and reporting
+- **Semantic Search** - Vector embeddings for meaning-based retrieval
 - **Visualization Tools** - Graph causal chains and memory tiers
 - **Performance Optimizations** - Caching and pre-fetching improvements
-- **Video Tutorials** - Demonstrating 3-layer brain architecture
+
+---
+
+## [3.2.0] - 2026-05-02 — LAYER 4: META-LEARNING
+
+Completes the 4-layer Wake Intelligence architecture. Weights are no longer hardcoded — each project now tunes its own 40/30/30 prediction formula from observed access patterns.
+
+### Added
+
+- **`MetaLearningService`** — domain service implementing Layer 4 adaptive weight learning. Records per-access component scores, tunes per-project weights from ≥20 outcomes (temporal/causal/frequency), clamps each dimension `[0.1, 0.6]`, redistributes deficit to non-pinned weights so sum stays exactly 1.0. 20 unit tests. ([MetaLearningService.ts](src/domain/services/MetaLearningService.ts))
+- **`prediction_outcomes` table** — records temporal, causal, frequency component scores at access time. Indexed on `(project, recorded_at DESC)`. ([migrations/0005_add_meta_learning.sql](migrations/0005_add_meta_learning.sql))
+- **`project_weights` table** — per-project learned weights (temporal/causal/frequency). `ON CONFLICT(project) DO UPDATE SET` upsert. Falls back to 0.4/0.3/0.3 defaults until 20 outcomes accumulated.
+- **`IContextRepository`** — 4 new Layer 4 methods: `recordPredictionOutcome`, `findOutcomesByProject`, `getProjectWeights`, `saveProjectWeights`.
+- **`D1ContextRepository`** — implements all 4 Layer 4 methods. 8 new SQL tests.
+- **`PropagationService.predictContext(context, weights?)`** — optional `ProjectWeights` parameter; `calculatePropagationScore()` uses learned weights instead of hardcoded 0.4/0.3/0.3. 3 new weight-injection tests.
+- **`ContextService.getLearningStats(project)`** — exposes meta-learning analytics at the service boundary.
+- **`ContextService.updatePredictions()`** — now fetches per-project weights and threads them into `PropagationService` before re-scoring.
+- **`loadContext()` / `searchContext()`** — record prediction outcomes fire-and-forget on every access, alongside existing `trackAccess()`.
+- **`get_learning_stats` MCP tool** — shows learned weights per dimension and component averages.
+
+### Counts
+- Tests: 163 → **197** (+34)
+- MCP tools: 11 → **12**
 
 ---
 
