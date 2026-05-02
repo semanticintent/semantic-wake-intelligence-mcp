@@ -28,7 +28,7 @@
  * - Layer 2 (Memory Manager): Tracks HOW relevant this is NOW
  */
 
-import type { ContextSnapshot as IContextSnapshot, CausalityMetadata, SaveContextInput, MemoryTier, PropagationMetadata } from '../../types';
+import type { ContextSnapshot as IContextSnapshot, CausalityMetadata, SaveContextInput, MemoryTier, PropagationMetadata, ProjectWeights } from '../../types';
 import { MemoryTier as MemoryTierEnum } from '../../types';
 
 /**
@@ -230,23 +230,18 @@ export class ContextSnapshot implements IContextSnapshot {
    */
   static calculatePropagationScore(
     context: ContextSnapshot,
-    causalStrength: number = 0.0
+    causalStrength: number = 0.0,
+    weights?: ProjectWeights
   ): number {
-    // Temporal score: Recent access → higher score
     const temporalScore = this.calculateTemporalScore(context);
-
-    // Causal score: Part of causal chains → higher score
-    const causalScore = causalStrength; // Passed from causal chain analysis
-
-    // Frequency score: High access count → higher score
+    const causalScore = causalStrength;
     const frequencyScore = this.calculateFrequencyScore(context);
 
-    // Composite score (weighted average)
-    const composite = (
-      0.4 * temporalScore +
-      0.3 * causalScore +
-      0.3 * frequencyScore
-    );
+    const tw = weights?.temporalWeight ?? 0.4;
+    const cw = weights?.causalWeight ?? 0.3;
+    const fw = weights?.frequencyWeight ?? 0.3;
+
+    const composite = tw * temporalScore + cw * causalScore + fw * frequencyScore;
 
     // Clamp to [0.0, 1.0]
     return Math.max(0.0, Math.min(1.0, composite));
