@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-197%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
+[![Tests](https://img.shields.io/badge/tests-221%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
@@ -328,14 +328,15 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 ## Features
 
 ### Core Context Management
-- **save_context**: Save conversation context with AI-powered summarization and auto-tagging
+- **save_context**: Save conversation context with AI-powered summarization and auto-tagging; supports `crossProject: true` to detect dependencies across all projects
 - **load_context**: Retrieve relevant context for a project (with Layer 2 LRU tracking)
-- **search_context**: Search contexts using keyword matching (with Layer 2 access tracking)
+- **search_context**: Semantic vector search (Cloudflare Vectorize) with keyword fallback
 
 ### Wake Intelligence Layer 1: Causality (Past)
 - **reconstruct_reasoning**: Understand WHY a context was created
 - **build_causal_chain**: Trace decision history backwards through time
 - **get_causality_stats**: Analytics on causal relationships and action types
+- **get_cross_project_dependents**: Find all downstream contexts (any project) caused by a given snapshot
 
 ### Wake Intelligence Layer 2: Memory (Present)
 - **get_memory_stats**: View memory tier distribution and access patterns
@@ -349,10 +350,11 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 
 ### Wake Intelligence Layer 4: Meta-Learning (Adaptive)
 - **get_learning_stats**: View learned per-project weights and component averages
+- **reindex_project**: Backfill semantic embeddings for historical snapshots
 
 ## 🧪 Testing
 
-This project includes comprehensive unit tests with **197 tests** covering all architectural layers.
+This project includes comprehensive unit tests with **221 tests** covering all architectural layers.
 
 ### Run Tests
 
@@ -372,9 +374,9 @@ npm run test:coverage
 
 ### Test Coverage
 
-- ✅ **Domain Layer**: 137 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService, PropagationService, MetaLearningService)
+- ✅ **Domain Layer**: 146 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService, PropagationService, MetaLearningService)
 - ✅ **Application Layer**: 10 tests (ToolExecutionHandler, MCP tool dispatch)
-- ✅ **Infrastructure Layer**: 38 tests (D1Repository, CloudflareAIProvider with fallbacks)
+- ✅ **Infrastructure Layer**: 53 tests (D1Repository, VectorizeRepository, CloudflareAIProvider with fallbacks)
 - ✅ **Presentation Layer**: 12 tests (MCPRouter, CORS, error handling)
 
 ### Test Structure
