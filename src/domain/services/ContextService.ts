@@ -151,7 +151,7 @@ export class ContextService {
       // Falls back to recency order when no predictions exist yet.
       const byScore = await this.repository.findByPredictionScore(0.0, input.project, boundedLimit);
       results = byScore.length > 0
-        ? byScore
+        ? byScore.map(r => ContextSnapshot.fromDatabase(r))
         : (await this.repository.findByProject(input.project, boundedLimit)).map(r => ContextSnapshot.fromDatabase(r));
     } else if (mode === 'archaeologist') {
       // Archaeologist: surface most-dormant contexts — sort by lastAccessed ASC,
