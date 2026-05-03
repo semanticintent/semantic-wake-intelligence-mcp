@@ -1,7 +1,7 @@
 # Wake Intelligence - Interview Preparation Guide
 
-> **Wake Intelligence: 4-Layer Temporal Intelligence for AI Agents**
-> MCP server implementing Past (causality), Present (memory), Future (prediction), Adaptive (meta-learning)
+> **Wake Intelligence: 5-Layer Temporal Intelligence for AI Agents**
+> MCP server implementing Past (causality), Present (memory), Future (prediction), Adaptive (meta-learning), Personality (temporal postures)
 > Reference implementation of Semantic Intent patterns and Hexagonal Architecture
 
 ---
@@ -23,11 +23,11 @@
 
 **What is Wake Intelligence?**
 
-Wake Intelligence is an MCP server implementing a **4-layer temporal intelligence brain** for AI agents: **Past** (causality tracking), **Present** (memory management), **Future** (predictive pre-fetching), and **Adaptive** (meta-learning).
+Wake Intelligence is an MCP server implementing a **5-layer temporal intelligence brain** for AI agents: **Past** (causality tracking), **Present** (memory management), **Future** (predictive pre-fetching), **Adaptive** (meta-learning), and **Personality** (temporal postures shaping how context is surfaced).
 
 **Why it matters:**
 - Enables AI agents to **learn from history**, **optimize current context**, and **predict future needs**
-- **221 passing tests** demonstrate comprehensive coverage
+- **231 passing tests** demonstrate comprehensive coverage
 - Deploys to Cloudflare Workers (edge computing)
 - Reference implementation of semantic intent + hexagonal architecture
 
@@ -43,13 +43,21 @@ Wake Intelligence is an MCP server implementing a **4-layer temporal intelligenc
 
 ## 2. Technical Architecture
 
-### 2.1 The 4-Layer Temporal Intelligence Brain
+### 2.1 The 5-Layer Temporal Intelligence Brain
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                   WAKE INTELLIGENCE BRAIN                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
+│  LAYER 5: PERSONALITY MODES (Presentation - HOW SURFACED)  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • historian — newest-first, timestamps, causality   │    │
+│  │ • prophet   — ranked by Layer 4 prediction score    │    │
+│  │ • archaeologist — most-dormant contexts first       │    │
+│  │ • minimalist — raw summaries, no framing            │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
 │  LAYER 4: META-LEARNING (Adaptive - HOW WELL)              │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │ • Tunes HOW WELL predictions work per project       │    │
@@ -88,11 +96,12 @@ Wake Intelligence is an MCP server implementing a **4-layer temporal intelligenc
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Why 4 layers?**
+**Why 5 layers?**
 1. **Past (Causality)** - Understand decision history → informs predictions
 2. **Present (Memory)** - Optimize current relevance → informs access patterns
 3. **Future (Propagation)** - Predict what's needed → proactive optimization
 4. **Adaptive (Meta-Learning)** - Tune HOW WELL predictions work → self-improving accuracy
+5. **Personality (Postures)** - Shape HOW context is surfaced → historian/prophet/archaeologist/minimalist
 
 ### 2.2 Hexagonal Architecture
 
@@ -146,7 +155,7 @@ src/
 
 ## 3. Key Design Decisions & Trade-offs
 
-### 3.1 Why 4-Layer Brain vs Traditional Context Management?
+### 3.1 Why 5-Layer Brain vs Traditional Context Management?
 
 **Decision:** Temporal intelligence with Past/Present/Future layers
 
@@ -236,7 +245,7 @@ predictionScore =
 
 **Trade-off:**
 - ✅ Highly maintainable
-- ✅ Easy to test (221 tests!)
+- ✅ Easy to test (231 tests!)
 - ✅ Composition root is only 74 lines (down from 483 - 90% reduction)
 - ❌ More files/abstractions upfront
 
@@ -258,7 +267,7 @@ export default {
     const aiProvider = new CloudflareAIProvider(env.AI);
     const metaLearningRepository = new D1MetaLearningRepository(env.DB);
 
-    // Domain services (4-layer brain)
+    // Domain services (5-layer brain)
     const causalityService = new CausalityService(repository);
     const memoryService = new MemoryManagerService(repository);
     const propagationService = new PropagationService(
@@ -440,7 +449,7 @@ async generateSummary(content: string): Promise<string> {
 
 ### Test Distribution
 
-**Total: 221 tests** (all passing ✅)
+**Total: 231 tests** (all passing ✅)
 
 | Layer | Tests | Strategy |
 |-------|-------|----------|
@@ -490,7 +499,7 @@ describe('CloudflareAIProvider', () => {
 ### Test Commands
 
 ```bash
-npm test              # Run all 221 tests
+npm test              # Run all 231 tests
 npm run test:watch    # TDD mode
 npm run test:ui       # Visual test runner
 npm run test:coverage # Coverage report
@@ -605,7 +614,7 @@ if (hoursSincePrediction > staleThreshold) {
 
 ### Theme A: Architecture & Design
 
-#### Q1: Explain the 4-layer Wake Intelligence brain. Why Past/Present/Future?
+#### Q1: Explain the 5-layer Wake Intelligence brain. Why Past/Present/Future/Adaptive/Personality?
 
 **A:** The brain is structured around **temporal understanding**:
 
@@ -692,9 +701,9 @@ export default {
 4. **Swappable infrastructure** - Could replace D1 with PostgreSQL
 
 **Trade-offs:**
-- ✅ Maintainable, testable (221 tests!)
+- ✅ Maintainable, testable (231 tests!)
 - ✅ Clear architecture for teams
-- ❌ More files (4 layers vs 1 file)
+- ❌ More files (5 layers vs 1 file)
 
 ---
 
@@ -853,7 +862,7 @@ async pruneExpiredContexts(limit = 100): Promise<number> {
 
 ### Theme C: Testing & Quality
 
-#### Q6: You have 221 tests. Walk through your testing strategy.
+#### Q6: You have 231 tests. Walk through your testing strategy.
 
 **A:** **Layer-specific strategies** optimized for each architectural layer
 
@@ -925,7 +934,7 @@ describe('Integration: Save and Load Context', () => {
 
 **Test commands:**
 ```bash
-npm test              # All 221 tests
+npm test              # All 231 tests
 npm run test:watch    # TDD mode
 npm run test:coverage # Coverage report
 ```
@@ -1069,7 +1078,7 @@ Junior: "Why is this architected this way?"
 |--------|------|----------|
 | Domain | Temporal intelligence | Database introspection |
 | Tests | 221 | 407 |
-| Layers | 4-layer brain | 4 architectural layers |
+| Layers | 5-layer brain | 4 architectural layers |
 | Key entity | ContextSnapshot | TableInfo/DatabaseSchema |
 | Deployment | Cloudflare Workers | Node.js (stdio) |
 
@@ -1118,7 +1127,7 @@ Junior: "Why is this architected this way?"
 
 1. **README.md** - Quick overview, brain architecture
 2. **ARCHITECTURE.md** - Complete design documentation (849 lines!)
-3. **BRAIN-ARCHITECTURE-IMPLEMENTATION-PLAN.md** - 4-layer implementation
+3. **BRAIN-ARCHITECTURE-IMPLEMENTATION-PLAN.md** - 5-layer implementation
 4. **src/index.ts** - Composition root (74 lines)
 5. **src/domain/services/** - All 4 domain services
 
@@ -1130,7 +1139,7 @@ npm run dev          # Start local Wrangler dev server
 npm run deploy       # Deploy to Cloudflare Workers
 
 # Testing
-npm test             # Run all 221 tests
+npm test             # Run all 231 tests
 npm run test:watch   # TDD mode
 npm run test:coverage # Coverage report
 
@@ -1146,8 +1155,8 @@ npm run type-check   # TypeScript validation
 
 ### Quick Stats to Memorize
 
-- **221 passing tests** (all layers)
-- **4-layer brain** (Past/Present/Future/Adaptive)
+- **231 passing tests** (all layers)
+- **5-layer brain** (Past/Present/Future/Adaptive/Personality)
 - **4-tier memory** (ACTIVE/RECENT/ARCHIVED/EXPIRED)
 - **74-line composition root** (90% reduction)
 - **Adaptive prediction** (weights tune per project via Layer 4)
@@ -1161,8 +1170,8 @@ npm run type-check   # TypeScript validation
 
 ### Do's
 
-✅ **Start with the 4-layer brain** - It's the unique differentiator
-✅ **Use specific numbers** - "221 tests", "40/30/30 scoring", "4 tiers"
+✅ **Start with the 5-layer brain** - It's the unique differentiator
+✅ **Use specific numbers** - "231 tests", "40/30/30 scoring", "4 tiers", "5 layers"
 ✅ **Explain trade-offs** - Every decision has pros/cons
 ✅ **Connect layers** - Show how Past informs Future
 ✅ **Reference code** - Point to specific files
@@ -1180,14 +1189,14 @@ npm run type-check   # TypeScript validation
 
 **Behavioral:**
 - "Tell me about a system you designed from scratch"
-  → Use Wake Intelligence 4-layer brain architecture
+  → Use Wake Intelligence 5-layer brain architecture
 
 - "Describe a time you optimized performance"
   → Use lazy prediction refresh + staleness threshold
 
 **Technical:**
 - "How do you structure code for testability?"
-  → Explain hexagonal architecture, 221 tests
+  → Explain hexagonal architecture, 231 tests
 
 - "Explain a complex algorithm you've implemented"
   → Walk through composite prediction scoring
@@ -1200,4 +1209,4 @@ npm run type-check   # TypeScript validation
 
 **Good luck! This project demonstrates senior-level system design, temporal intelligence, and production-ready edge computing.**
 
-**Remember:** The 4-layer brain (Past/Present/Future/Adaptive) is your unique story - lead with that! 🧠
+**Remember:** The 5-layer brain (Past/Present/Future/Adaptive/Personality) is your unique story - lead with that! 🧠

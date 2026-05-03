@@ -2,7 +2,7 @@
 
 ## Overview
 
-Wake Intelligence is a production-ready Model Context Protocol (MCP) server implementing a **4-layer temporal intelligence system** that gives AI agents memory with understanding of **Past**, **Present**, **Future**, and **Adaptive** self-improvement.
+Wake Intelligence is a production-ready Model Context Protocol (MCP) server implementing a **5-layer temporal intelligence system** that gives AI agents memory with understanding of **Past**, **Present**, **Future**, **Adaptive** self-improvement, and **Personality** — temporal postures that shape how context is surfaced.
 
 This document describes the complete architectural design, from the temporal intelligence brain to the hexagonal infrastructure layers.
 
@@ -10,7 +10,7 @@ This document describes the complete architectural design, from the temporal int
 
 ## Table of Contents
 
-- [Wake Intelligence Brain (4-Layer System)](#wake-intelligence-brain-4-layer-system)
+- [Wake Intelligence Brain (5-Layer System)](#wake-intelligence-brain-5-layer-system)
   - [Layer 1: Causality Engine (Past)](#layer-1-causality-engine-past---why)
   - [Layer 2: Memory Manager (Present)](#layer-2-memory-manager-present---how)
   - [Layer 3: Propagation Engine (Future)](#layer-3-propagation-engine-future---what)
@@ -23,19 +23,38 @@ This document describes the complete architectural design, from the temporal int
 
 ---
 
-## Wake Intelligence Brain (4-Layer System)
+## Wake Intelligence Brain (5-Layer System)
 
 The Wake Intelligence brain is a temporal intelligence system that enables AI agents to:
 1. **Learn from the past** - Understand causal relationships (Layer 1)
 2. **Optimize the present** - Manage memory intelligently (Layer 2)
 3. **Predict the future** - Pre-fetch what's needed next (Layer 3)
 4. **Adapt continuously** - Tune per-project prediction weights from observed access patterns (Layer 4)
+5. **Surface intelligently** - Shape how context is retrieved and presented via temporal postures (Layer 5)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                   WAKE INTELLIGENCE BRAIN                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
+│  LAYER 5: PERSONALITY MODES (Presentation - HOW SURFACED)  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ personality-modes config                            │    │
+│  │ • historian — timestamps, causality chain           │    │
+│  │ • prophet   — prediction-score ranked               │    │
+│  │ • archaeologist — most-dormant first                │    │
+│  │ • minimalist — raw summaries only                   │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
+│  LAYER 4: META-LEARNING ENGINE (Adaptive - HOW WELL)        │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ MetaLearningService                                 │    │
+│  │ • recordOutcome()                                   │    │
+│  │ • tuneWeights()                                     │    │
+│  │ • getProjectWeights()                               │    │
+│  │ • getLearningStats()                                │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
 │  LAYER 3: PROPAGATION ENGINE (Future - WHAT)                │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │ PropagationService                                  │    │
@@ -832,36 +851,15 @@ src/domain/services/
 
 ## Future Enhancements
 
-### Potential Layer 4: Meta-Learning
-Learn from prediction accuracy to tune weights:
-```typescript
-// Track prediction accuracy
-interface PredictionOutcome {
-  contextId: string
-  predictedScore: number
-  actuallyAccessed: boolean
-  predictionTime: string
-  accessTime: string | null
-}
+### ✅ Layer 4: Meta-Learning — Shipped in v3.2.0
+Per-project weight tuning from observed access outcomes. `MetaLearningService`, `prediction_outcomes` + `project_weights` tables. Activates after 20 outcomes per project.
 
-// Adjust weights based on accuracy
-function tuneWeights(outcomes: PredictionOutcome[]) {
-  // Optimize weights to minimize prediction error
-}
-```
-
-### Potential Layer 5: Cross-Project Intelligence
-Identify patterns across projects:
-```typescript
-// Find similar contexts across projects
-interface CrossProjectPattern {
-  pattern: string
-  projects: string[]
-  frequency: number
-}
-
-// Enable knowledge transfer between projects
-```
+### ✅ Layer 5: Temporal Personality Modes — Shipped in v3.4.0
+Four temporal postures on `load_context` and `search_context` via `personality_mode` param:
+- `historian` (default) — newest-first, causality chain
+- `prophet` — ranked by Layer 4 prediction score
+- `archaeologist` — most-dormant contexts first
+- `minimalist` — raw summaries only
 
 ---
 
@@ -870,7 +868,7 @@ interface CrossProjectPattern {
 Wake Intelligence demonstrates how to build a production-ready temporal intelligence system for AI agents with:
 
 1. **Clear architectural layers** - Domain, Application, Infrastructure, Presentation
-2. **4-layer brain system** - Past (causality), Present (memory), Future (prediction), Adaptive (meta-learning)
+2. **5-layer brain system** - Past (causality), Present (memory), Future (prediction), Adaptive (meta-learning), Personality (temporal postures)
 3. **Observable reasoning** - Every decision is explainable
 4. **Semantic intent preservation** - Meaning maintained through all transformations
 5. **Deterministic algorithms** - No black-box ML, full transparency
