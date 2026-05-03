@@ -236,6 +236,9 @@ export interface LoadContextInput {
 
   /** Maximum contexts to return (optional, default: 1, max: 10) */
   limit?: number;
+
+  /** Temporal posture shaping retrieval and presentation (default: historian) */
+  personality_mode?: import('./config/personality-modes').PersonalityMode;
 }
 
 /**
@@ -254,6 +257,9 @@ export interface SearchContextInput {
 
   /** Optional semantic domain filter */
   project?: string;
+
+  /** Temporal posture shaping result ranking and presentation (default: historian) */
+  personality_mode?: import('./config/personality-modes').PersonalityMode;
 }
 
 /**

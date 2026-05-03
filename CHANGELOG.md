@@ -10,9 +10,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned - Future Enhancements
-- **Layer 5: Cross-Project Intelligence** - Identify patterns across projects
 - **Visualization Tools** - Graph causal chains and memory tiers
 - **Performance Optimizations** - Caching and pre-fetching improvements
+
+---
+
+## [3.4.0] - 2026-05-03 — LAYER 5: TEMPORAL PERSONALITY MODES
+
+Adds four temporal postures to `load_context` and `search_context` that shape
+how context is retrieved and presented. Follows the same config-driven pattern
+as `semantic-chirp-intelligence-mcp`.
+
+### Added
+
+- **`src/config/personality-modes.ts`** — Four modes with `focus`, `tone`, `depth`, `verbosity`:
+  - `historian` (default) — newest-first, timestamps, causality chain
+  - `prophet` — ranked by Layer 4 prediction score; falls back to recency
+  - `archaeologist` — most-dormant first (null `lastAccessed` sorted first)
+  - `minimalist` — raw summaries only, no framing
+- **`personality_mode` param** — optional field on `LoadContextInput` and `SearchContextInput` (default: `historian`)
+- **Mode-aware retrieval** — Prophet calls `findByPredictionScore`; Archaeologist fetches pool of 50 and re-sorts by `lastAccessed ASC`; Historian/Minimalist use standard `findByProject`
+- **Mode-aware search re-ranking** — Prophet re-ranks search results by `predictionScore DESC`; Archaeologist by `lastAccessed ASC`
+- **Mode-aware handler formatting** — each mode produces a distinct output shape with contextual header
+- **`load_context` + `search_context` MCP schemas** updated with `personality_mode` enum
+
+### Counts
+- Tests: 221 → **231** (+10)
 
 ---
 

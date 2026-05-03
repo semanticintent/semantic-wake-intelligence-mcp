@@ -141,10 +141,35 @@ export class ContextService {
    * @returns Contexts ordered by timestamp DESC
    */
   async loadContext(input: LoadContextInput): Promise<ContextSnapshot[]> {
-    // Business rule: Bounded limit for safety
     const boundedLimit = Math.min(input.limit || 1, 10);
+    const mode = input.personality_mode ?? 'historian';
 
-    const results = await this.repository.findByProject(input.project, boundedLimit);
+    let results: ContextSnapshot[];
+
+    if (mode === 'prophet') {
+      // Prophet: rank by Layer 4 prediction score — highest predicted contexts first.
+      // Falls back to recency order when no predictions exist yet.
+      const byScore = await this.repository.findByPredictionScore(0.0, input.project, boundedLimit);
+      results = byScore.length > 0
+        ? byScore
+        : (await this.repository.findByProject(input.project, boundedLimit)).map(r => ContextSnapshot.fromDatabase(r));
+    } else if (mode === 'archaeologist') {
+      // Archaeologist: surface most-dormant contexts — sort by lastAccessed ASC,
+      // null (never accessed) first. Fetches a wider pool to find the forgotten ones.
+      const pool = await this.repository.findByProject(input.project, 50);
+      results = pool
+        .sort((a, b) => {
+          if (!a.lastAccessed && !b.lastAccessed) return 0;
+          if (!a.lastAccessed) return -1;
+          if (!b.lastAccessed) return 1;
+          return new Date(a.lastAccessed).getTime() - new Date(b.lastAccessed).getTime();
+        })
+        .slice(0, boundedLimit)
+        .map(r => ContextSnapshot.fromDatabase(r));
+    } else {
+      // Historian / Minimalist: standard newest-first
+      results = (await this.repository.findByProject(input.project, boundedLimit)).map(r => ContextSnapshot.fromDatabase(r));
+    }
 
     // Layer 2: Track access; Layer 4: Record outcome (both fire-and-forget)
     results.forEach(r => {
@@ -156,7 +181,7 @@ export class ContextService {
       });
     });
 
-    return results.map(r => ContextSnapshot.fromDatabase(r));
+    return results;
   }
 
   /**
@@ -175,7 +200,22 @@ export class ContextService {
    * @returns Contexts matching semantic meaning
    */
   async searchContext(input: SearchContextInput): Promise<ContextSnapshot[]> {
-    const results = await this.semanticSearch(input.query, input.project);
+    let results = await this.semanticSearch(input.query, input.project);
+    const mode = input.personality_mode ?? 'historian';
+
+    // Re-rank search results based on mode
+    if (mode === 'prophet') {
+      results = [...results].sort((a, b) =>
+        (b.propagation?.predictionScore ?? 0) - (a.propagation?.predictionScore ?? 0)
+      );
+    } else if (mode === 'archaeologist') {
+      results = [...results].sort((a, b) => {
+        if (!a.lastAccessed && !b.lastAccessed) return 0;
+        if (!a.lastAccessed) return -1;
+        if (!b.lastAccessed) return 1;
+        return new Date(a.lastAccessed).getTime() - new Date(b.lastAccessed).getTime();
+      });
+    }
 
     // Layer 2: Track access; Layer 4: Record outcome (both fire-and-forget)
     results.forEach(r => {
