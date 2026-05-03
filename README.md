@@ -92,6 +92,40 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 - Prioritize contexts by prediction score
 - Identify patterns in context usage
 
+### **Layer 4: Meta-Learning Engine (Adaptive - HOW WELL)**
+Tunes **HOW WELL** predictions work by learning from observed access patterns per project.
+
+**Features:**
+- ✅ Per-project weight tuning from real access outcomes
+- ✅ Activates after ≥20 outcomes — defaults to 40/30/30 until then
+- ✅ Weights clamped [0.1, 0.6] — no single dimension can dominate
+- ✅ `get_learning_stats` tool — inspect current weights and component averages
+
+**Weight Dimensions:**
+- **Temporal (default 40%)**: How recently was this context accessed?
+- **Causal (default 30%)**: How central is it in causal chains?
+- **Frequency (default 30%)**: How often has it been accessed?
+
+**Use Cases:**
+- Let the system discover that causal position predicts access better than recency on long-running projects
+- Inspect per-project learning progress with `get_learning_stats`
+- Weights feed directly into Prophet mode ranking
+
+### **Layer 5: Personality Modes (Presentation - HOW SURFACED)**
+Shapes **HOW** context is retrieved and presented via four temporal postures on `load_context` and `search_context`.
+
+**Modes:**
+- ✅ `historian` (default) — newest-first, timestamps, causality action type and rationale
+- ✅ `prophet` — ranked by Layer 4 prediction score; surfaces what you'll likely need next
+- ✅ `archaeologist` — most-dormant first (never-accessed sorted to top); resurfaces forgotten threads
+- ✅ `minimalist` — raw summaries only, no framing or metadata
+
+**Use Cases:**
+- Re-entering a project after a long gap → `archaeologist` to find forgotten threads
+- Planning the next session → `prophet` to see what Layer 4 predicts you'll need
+- Scripted/automated consumers → `minimalist` for clean output
+- Default session continuity → `historian` for full decision context
+
 ### **Temporal Intelligence Flow:**
 
 ```
