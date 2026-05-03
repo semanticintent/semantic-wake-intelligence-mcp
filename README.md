@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-221%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
+[![Tests](https://img.shields.io/badge/tests-231%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
@@ -12,9 +12,9 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant-blue.svg)](CODE_OF_CONDUCT.md)
 
-> **Wake Intelligence: 4-Layer Temporal Intelligence for AI Agents**
+> **Wake Intelligence: 5-Layer Temporal Intelligence for AI Agents**
 >
-> A production-ready Model Context Protocol (MCP) server implementing a temporal intelligence "brain" with four layers: **Past** (causality tracking), **Present** (memory management), **Future** (predictive pre-fetching), and **Adaptive** (meta-learning — per-project weight tuning).
+> A production-ready Model Context Protocol (MCP) server implementing a temporal intelligence "brain" with five layers: **Past** (causality tracking), **Present** (memory management), **Future** (predictive pre-fetching), **Adaptive** (meta-learning — per-project weight tuning), and **Personality** (temporal postures that shape how context is retrieved and presented).
 >
 > Reference implementation of Semantic Intent as Single Source of Truth patterns with hexagonal architecture.
 
@@ -33,7 +33,7 @@
 
 ## 🧠 Wake Intelligence Brain Architecture
 
-Wake Intelligence implements a **4-layer temporal intelligence system** that learns from the past, manages the present, predicts the future, and continuously adapts its own prediction weights:
+Wake Intelligence implements a **5-layer temporal intelligence system** that learns from the past, manages the present, predicts the future, adapts its own prediction weights, and shapes how context is surfaced:
 
 ### **Layer 1: Causality Engine (Past - WHY)**
 Tracks **WHY** contexts were created and their causal relationships.
@@ -99,6 +99,14 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 │                   WAKE INTELLIGENCE BRAIN                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
+│  LAYER 5: PERSONALITY MODES (Presentation - HOW SURFACED)  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • historian — newest-first, timestamps, causality   │    │
+│  │ • prophet   — ranked by Layer 4 prediction score    │    │
+│  │ • archaeologist — most-dormant contexts first       │    │
+│  │ • minimalist — raw summaries, no framing            │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            ▲                                  │
 │  LAYER 4: META-LEARNING ENGINE (Adaptive - HOW WELL)        │
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │ • Tunes per-project prediction weights              │    │
@@ -135,6 +143,7 @@ Predicts **WHAT** contexts will be needed next for proactive optimization.
 - 🎯 **Optimize the present**: Manage memory intelligently
 - 🎯 **Predict the future**: Pre-fetch what's needed next
 - 🎯 **Adapt continuously**: Per-project weights improve with every access
+- 🎯 **Surface intelligently**: Personality modes shape what you see and when
 - 🎯 **Observable reasoning**: Every decision is explainable
 
 ## 🎯 What Makes This Different
@@ -336,8 +345,8 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 
 ### Core Context Management
 - **save_context**: Save conversation context with AI-powered summarization and auto-tagging; supports `crossProject: true` to detect dependencies across all projects
-- **load_context**: Retrieve relevant context for a project (with Layer 2 LRU tracking)
-- **search_context**: Semantic vector search (Cloudflare Vectorize) with keyword fallback
+- **load_context**: Retrieve relevant context for a project — pass `personality_mode` to shape retrieval (see Layer 5)
+- **search_context**: Semantic vector search (Cloudflare Vectorize) with keyword fallback — pass `personality_mode` to re-rank results
 
 ### Wake Intelligence Layer 1: Causality (Past)
 - **reconstruct_reasoning**: Understand WHY a context was created
@@ -359,9 +368,16 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 - **get_learning_stats**: View learned per-project weights and component averages
 - **reindex_project**: Backfill semantic embeddings for historical snapshots
 
+### Wake Intelligence Layer 5: Personality Modes (Presentation)
+Four temporal postures available on `load_context` and `search_context` via the `personality_mode` param:
+- **`historian`** (default): Newest-first, timestamps, causality action type and rationale
+- **`prophet`**: Ranked by Layer 4 prediction score — surfaces what you are most likely to need next
+- **`archaeologist`**: Most-dormant contexts first (null `lastAccessed` sorted to top) — resurfaces forgotten threads
+- **`minimalist`**: Raw summaries only, no framing or metadata
+
 ## 🧪 Testing
 
-This project includes comprehensive unit tests with **221 tests** covering all architectural layers.
+This project includes comprehensive unit tests with **231 tests** covering all architectural layers.
 
 ### Run Tests
 
