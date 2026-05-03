@@ -32,24 +32,36 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "load_context",
-    description: "Load relevant context for a project",
+    description: "Load relevant context for a project. Use personality_mode to shape retrieval: historian (default, newest-first with causality), prophet (ranked by prediction score), archaeologist (most-dormant first), minimalist (raw summaries only).",
     inputSchema: {
       type: "object",
       properties: {
         project: { type: "string", description: "Project identifier" },
-        limit: { type: "number", description: "Maximum contexts to return", default: 1 }
+        limit: { type: "number", description: "Maximum contexts to return", default: 1 },
+        personality_mode: {
+          type: "string",
+          enum: ["historian", "prophet", "archaeologist", "minimalist"],
+          description: "Temporal posture: historian=causal+timestamps, prophet=prediction-ranked, archaeologist=dormant-first, minimalist=raw",
+          default: "historian"
+        }
       },
       required: ["project"]
     }
   },
   {
     name: "search_context",
-    description: "Search contexts using keyword matching",
+    description: "Search contexts by keyword or semantic query. Use personality_mode to re-rank results: historian (default), prophet (prediction-score ranked), archaeologist (least-recently-accessed first), minimalist (raw summaries).",
     inputSchema: {
       type: "object",
       properties: {
         query: { type: "string", description: "Search query" },
-        project: { type: "string", description: "Project to search within" }
+        project: { type: "string", description: "Project to search within" },
+        personality_mode: {
+          type: "string",
+          enum: ["historian", "prophet", "archaeologist", "minimalist"],
+          description: "Temporal posture shaping result ranking and presentation",
+          default: "historian"
+        }
       },
       required: ["query"]
     }

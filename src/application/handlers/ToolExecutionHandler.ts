@@ -123,6 +123,7 @@ export class ToolExecutionHandler {
    */
   private async handleLoadContext(input: LoadContextInput): Promise<ToolResult> {
     const snapshots = await this.contextService.loadContext(input);
+    const mode = input.personality_mode ?? 'historian';
 
     if (snapshots.length === 0) {
       return {
@@ -133,14 +134,46 @@ export class ToolExecutionHandler {
       };
     }
 
-    const contextList = snapshots
-      .map(ctx => `**${ctx.project}** (${ctx.timestamp})\n${ctx.summary}\nTags: ${ctx.tags}`)
-      .join('\n\n');
+    if (mode === 'minimalist') {
+      return {
+        content: [{
+          type: "text",
+          text: snapshots.map(ctx => ctx.summary).join('\n\n')
+        }]
+      };
+    }
+
+    let header: string;
+    let contextList: string;
+
+    if (mode === 'prophet') {
+      header = `Prophet Mode — Predicted priorities for \`${input.project}\``;
+      contextList = snapshots.map(ctx => {
+        const score = ctx.propagation?.predictionScore?.toFixed(2) ?? 'unscored';
+        const reasons = ctx.propagation?.propagationReason?.join(', ') ?? 'none';
+        const next = ctx.propagation?.predictedNextAccess ?? 'unknown';
+        return `**Prediction score: ${score}** (${reasons})\n${ctx.summary}\nPredicted next access: ${next}`;
+      }).join('\n\n');
+    } else if (mode === 'archaeologist') {
+      header = `Archaeologist Mode — Dormant threads for \`${input.project}\``;
+      contextList = snapshots.map(ctx => {
+        const dormant = ctx.lastAccessed ? `last accessed ${ctx.lastAccessed}` : 'never accessed';
+        return `**${ctx.timestamp}** · ${dormant} · tier: ${ctx.memoryTier}\n${ctx.summary}\nTags: ${ctx.tags}`;
+      }).join('\n\n');
+    } else {
+      header = `Historian Mode — Decision history for \`${input.project}\``;
+      contextList = snapshots.map(ctx => {
+        const causality = ctx.causality
+          ? `\nAction: ${ctx.causality.actionType} — ${ctx.causality.rationale}`
+          : '';
+        return `**${ctx.timestamp}** · tier: ${ctx.memoryTier}${causality}\n${ctx.summary}\nTags: ${ctx.tags}`;
+      }).join('\n\n');
+    }
 
     return {
       content: [{
         type: "text",
-        text: `Found ${snapshots.length} context(s):\n\n${contextList}`
+        text: `Found ${snapshots.length} context(s):\n\n${header}\n\n${contextList}`
       }]
     };
   }
@@ -156,6 +189,7 @@ export class ToolExecutionHandler {
    */
   private async handleSearchContext(input: SearchContextInput): Promise<ToolResult> {
     const snapshots = await this.contextService.searchContext(input);
+    const mode = input.personality_mode ?? 'historian';
 
     if (snapshots.length === 0) {
       return {
@@ -166,14 +200,41 @@ export class ToolExecutionHandler {
       };
     }
 
-    const searchList = snapshots
-      .map(ctx => `**${ctx.project}** (${ctx.timestamp})\n${ctx.summary}\nTags: ${ctx.tags}`)
-      .join('\n\n');
+    if (mode === 'minimalist') {
+      return {
+        content: [{
+          type: "text",
+          text: snapshots.map(ctx => ctx.summary).join('\n\n')
+        }]
+      };
+    }
+
+    let header: string;
+    let searchList: string;
+
+    if (mode === 'prophet') {
+      header = `Prophet Mode — Predicted priorities matching "${input.query}"`;
+      searchList = snapshots.map(ctx => {
+        const score = ctx.propagation?.predictionScore?.toFixed(2) ?? 'unscored';
+        return `**Score: ${score}** · \`${ctx.project}\` (${ctx.timestamp})\n${ctx.summary}`;
+      }).join('\n\n');
+    } else if (mode === 'archaeologist') {
+      header = `Archaeologist Mode — Dormant matches for "${input.query}"`;
+      searchList = snapshots.map(ctx => {
+        const dormant = ctx.lastAccessed ? `last accessed ${ctx.lastAccessed}` : 'never accessed';
+        return `**\`${ctx.project}\`** · ${dormant}\n${ctx.summary}`;
+      }).join('\n\n');
+    } else {
+      header = `Historian Mode — Results for "${input.query}"`;
+      searchList = snapshots
+        .map(ctx => `**${ctx.project}** (${ctx.timestamp})\n${ctx.summary}\nTags: ${ctx.tags}`)
+        .join('\n\n');
+    }
 
     return {
       content: [{
         type: "text",
-        text: `Found ${snapshots.length} context(s) for "${input.query}":\n\n${searchList}`
+        text: `Found ${snapshots.length} context(s):\n\n${header}\n\n${searchList}`
       }]
     };
   }

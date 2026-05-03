@@ -195,7 +195,7 @@ describe('ToolExecutionHandler', () => {
 
       // Assert
       expect(result.content[0].text).toContain('Found 2 context(s)');
-      expect(result.content[0].text).toContain('**test-project**');
+      expect(result.content[0].text).toContain('Historian Mode');
       expect(result.content[0].text).toContain('Summary 1');
       expect(result.content[0].text).toContain('Summary 2');
       expect(result.content[0].text).toContain('Tags: tag1');
@@ -249,7 +249,8 @@ describe('ToolExecutionHandler', () => {
       const result = await handler.execute('search_context', input);
 
       // Assert
-      expect(result.content[0].text).toContain('Found 1 context(s) for "important feature"');
+      expect(result.content[0].text).toContain('Found 1 context(s)');
+      expect(result.content[0].text).toContain('important feature');
       expect(result.content[0].text).toContain('**project-a**');
       expect(result.content[0].text).toContain('Summary about important feature');
       expect(result.content[0].text).toContain('Tags: feature,important');
