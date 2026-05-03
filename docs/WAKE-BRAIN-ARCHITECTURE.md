@@ -3,24 +3,44 @@
 **System**: Semantic Wake Intelligence MCP (formerly semantic-context-mcp)
 **Domain**: wakeiqx.com
 **Dimension**: Time (Memory, Continuity, Causality)
-**Brain Layers**: 4 (Temporal Flow + Adaptive Learning)
+**Brain Layers**: 5 (Temporal Flow + Adaptive Learning + Personality Modes)
 
 ---
 
 ## Abstract
 
-Wake Intelligence embodies the **Time dimension** of the Cormorant Trinity framework. Unlike ChirpIQX's 7-layer acoustic processing (Sound) or PerchIQX's 4-layer spatial hierarchy (Space), Wake Intelligence uses a **4-layer temporal flow architecture**: **Past → Present → Future → Adaptive** (Causality → Persistence → Propagation → Meta-Learning).
+Wake Intelligence embodies the **Time dimension** of the Cormorant Trinity framework. Unlike ChirpIQX's 7-layer acoustic processing (Sound) or PerchIQX's 4-layer spatial hierarchy (Space), Wake Intelligence uses a **5-layer temporal flow architecture**: **Past → Present → Future → Adaptive → Personality** (Causality → Persistence → Propagation → Meta-Learning → Temporal Postures).
 
 This document maps the current `semantic-context-mcp` implementation to the Wake Intelligence brain framework and identifies enhancements needed to fully realize the temporal intelligence pattern.
 
 ---
 
-## 1. The 4-Layer Temporal Brain
+## 1. The 5-Layer Temporal Brain
 
 ### Layer Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
+│         LAYER 5: Personality Modes (Presentation)           │
+│         "How should context be surfaced?"                   │
+│                                                              │
+│  - historian  — timestamps, causality, decision history     │
+│  - prophet    — ranked by Layer 4 prediction score          │
+│  - archaeologist — most-dormant contexts first              │
+│  - minimalist — raw summaries, no framing                   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│         LAYER 4: Meta-Learning Engine (Adaptive)            │
+│         "How well are predictions working?"                 │
+│                                                              │
+│  - Per-project weight tuning from outcomes                  │
+│  - Activates after 20 access outcomes                       │
+│  - Clamps weights [0.1, 0.6] to prevent drift               │
+│  - Prophet mode reads these weights directly                │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
 │         LAYER 3: Propagation Engine (Future)                │
 │         "How does the past influence the future?"           │
 │                                                              │
