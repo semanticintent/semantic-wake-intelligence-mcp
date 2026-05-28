@@ -16,7 +16,7 @@
  */
 
 import type { ContextService } from '../../domain/services/ContextService';
-import type { ToolResult, SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
+import type { ToolResult, SaveContextInput, LoadContextInput, SearchContextInput, IngestRuneManifestInput } from '../../types';
 import { ContextSnapshot } from '../../domain/models/ContextSnapshot';
 
 /**
@@ -86,6 +86,16 @@ export class ToolExecutionHandler {
 
       case 'get_cross_project_dependents':
         return this.handleGetCrossProjectDependents(args as { snapshotId: string });
+
+      // v3.5.0: Observability + Rune Integration
+      case 'get_causal_graph':
+        return this.handleGetCausalGraph(args as { project: string; limit?: number });
+
+      case 'get_memory_health':
+        return this.handleGetMemoryHealth(args as { project: string });
+
+      case 'ingest_rune_manifest':
+        return this.handleIngestRuneManifest(args as IngestRuneManifestInput);
 
       default:
         throw new Error(`Unknown tool: ${toolName}`);
@@ -160,6 +170,27 @@ export class ToolExecutionHandler {
         const dormant = ctx.lastAccessed ? `last accessed ${ctx.lastAccessed}` : 'never accessed';
         return `**${ctx.timestamp}** · ${dormant} · tier: ${ctx.memoryTier}\n${ctx.summary}\nTags: ${ctx.tags}`;
       }).join('\n\n');
+    } else if (mode === 'auditor') {
+      header = `Auditor Mode — Authorship breakdown for \`${input.project}\``;
+      const groups: Record<string, typeof snapshots> = { human: [], 'ai-agent': [], 'ai-compositor': [], unattributed: [] };
+      for (const ctx of snapshots) {
+        let authorType = 'unattributed';
+        if (ctx.metadata) {
+          try {
+            const meta = JSON.parse(ctx.metadata) as Record<string, unknown>;
+            if (typeof meta.authorType === 'string') authorType = meta.authorType;
+          } catch { /* ignore */ }
+        }
+        (groups[authorType] ?? groups.unattributed).push(ctx);
+      }
+      const labels: Record<string, string> = { human: '👤 Human', 'ai-agent': '🤖 AI Agent', 'ai-compositor': '🎼 AI Compositor', unattributed: '❓ Unattributed' };
+      contextList = Object.entries(groups)
+        .filter(([, ctxs]) => ctxs.length > 0)
+        .map(([type, ctxs]) => {
+          const items = ctxs.map(ctx => `  - **${ctx.timestamp}** · ${ctx.summary}`).join('\n');
+          return `**${labels[type] ?? type}** (${ctxs.length})\n${items}`;
+        })
+        .join('\n\n');
     } else {
       header = `Historian Mode — Decision history for \`${input.project}\``;
       contextList = snapshots.map(ctx => {
@@ -224,6 +255,27 @@ export class ToolExecutionHandler {
         const dormant = ctx.lastAccessed ? `last accessed ${ctx.lastAccessed}` : 'never accessed';
         return `**\`${ctx.project}\`** · ${dormant}\n${ctx.summary}`;
       }).join('\n\n');
+    } else if (mode === 'auditor') {
+      header = `Auditor Mode — Authorship breakdown for "${input.query}"`;
+      const groups: Record<string, typeof snapshots> = { human: [], 'ai-agent': [], 'ai-compositor': [], unattributed: [] };
+      for (const ctx of snapshots) {
+        let authorType = 'unattributed';
+        if (ctx.metadata) {
+          try {
+            const meta = JSON.parse(ctx.metadata) as Record<string, unknown>;
+            if (typeof meta.authorType === 'string') authorType = meta.authorType;
+          } catch { /* ignore */ }
+        }
+        (groups[authorType] ?? groups.unattributed).push(ctx);
+      }
+      const labels: Record<string, string> = { human: '👤 Human', 'ai-agent': '🤖 AI Agent', 'ai-compositor': '🎼 AI Compositor', unattributed: '❓ Unattributed' };
+      searchList = Object.entries(groups)
+        .filter(([, ctxs]) => ctxs.length > 0)
+        .map(([type, ctxs]) => {
+          const items = ctxs.map(ctx => `  - **${ctx.project}** (${ctx.timestamp}) · ${ctx.summary}`).join('\n');
+          return `**${labels[type] ?? type}** (${ctxs.length})\n${items}`;
+        })
+        .join('\n\n');
     } else {
       header = `Historian Mode — Results for "${input.query}"`;
       searchList = snapshots
@@ -491,6 +543,90 @@ ${Object.entries(stats.actionTypeCounts)
       content: [{
         type: "text",
         text: `Found ${dependents.length} downstream dependent(s):\n\n${list}`
+      }]
+    };
+  }
+
+  // =============================================================================
+  // v3.5.0: Observability + Rune Integration
+  // =============================================================================
+
+  private async handleGetCausalGraph(args: { project: string; limit?: number }): Promise<ToolResult> {
+    const graph = await this.contextService.getCausalGraph(args.project, args.limit);
+
+    if (graph.nodeCount === 0) {
+      return { content: [{ type: "text", text: `No contexts found for project: ${args.project}` }] };
+    }
+
+    const nodeList = graph.nodes
+      .map(n => `  ${n.id.slice(0, 8)} | ${n.actionType.padEnd(12)} | ${n.memoryTier.padEnd(8)} | ${n.summary.slice(0, 60)}`)
+      .join('\n');
+
+    const edgeList = graph.edges.length > 0
+      ? graph.edges.map(e => `  ${e.from.slice(0, 8)} → ${e.to.slice(0, 8)} (${e.type})`).join('\n')
+      : '  No edges (no causal relationships recorded)';
+
+    return {
+      content: [{
+        type: "text",
+        text: `**Causal Graph for \`${args.project}\`**\n\n📊 ${graph.nodeCount} nodes · ${graph.edgeCount} edges\n\n**Nodes:**\n${nodeList}\n\n**Edges:**\n${edgeList}`
+      }]
+    };
+  }
+
+  private async handleGetMemoryHealth(args: { project: string }): Promise<ToolResult> {
+    const health = await this.contextService.getMemoryHealth(args.project);
+    const m = health.memory;
+    const c = health.causality;
+    const p = health.propagation;
+    const l = health.learning;
+    const tuned = l.lastTuned ? new Date(l.lastTuned).toLocaleString() : 'never';
+
+    const text = `**Memory Health Report — \`${health.project}\`**
+Generated: ${health.generatedAt}
+
+🗂️ **Memory Tiers** (total: ${m.total})
+  🔥 ACTIVE  (< 1h):    ${m.active}
+  ⚡ RECENT  (1-24h):   ${m.recent}
+  📦 ARCHIVED (1-30d):  ${m.archived}
+  ❄️  EXPIRED (> 30d):  ${m.expired}
+
+🔗 **Causality** (Layer 1)
+  Contexts with causality: ${c.totalWithCausality}
+  Root causes:             ${c.rootCauses}
+  Avg chain length:        ${c.averageChainLength.toFixed(2)}
+
+🔮 **Predictions** (Layer 3)
+  Total contexts:          ${p.totalContexts}
+  Predicted:               ${p.totalPredicted}
+  Avg prediction score:    ${p.averagePredictionScore.toFixed(3)}
+
+🧠 **Meta-Learning** (Layer 4 — sample: ${l.sampleSize}, tuned: ${tuned})
+  Temporal:  ${(l.weights.temporal * 100).toFixed(1)}%
+  Causal:    ${(l.weights.causal * 100).toFixed(1)}%
+  Frequency: ${(l.weights.frequency * 100).toFixed(1)}%`;
+
+    return { content: [{ type: "text", text }] };
+  }
+
+  private async handleIngestRuneManifest(input: IngestRuneManifestInput): Promise<ToolResult> {
+    const result = await this.contextService.ingestRuneManifest(input);
+
+    if (result.ingested === 0) {
+      return {
+        content: [{
+          type: "text",
+          text: `No bindings ingested from manifest (${result.skipped} skipped — no intent annotations found)`
+        }]
+      };
+    }
+
+    const bindingList = result.bindings.map(b => `  - ${b}`).join('\n');
+
+    return {
+      content: [{
+        type: "text",
+        text: `**Rune Manifest Ingested → \`${input.project}\`**\n\n✅ ${result.ingested} binding(s) saved as Wake contexts\n⏭️  ${result.skipped} binding(s) skipped (no intent)\n\n**Ingested bindings:**\n${bindingList}`
       }]
     };
   }

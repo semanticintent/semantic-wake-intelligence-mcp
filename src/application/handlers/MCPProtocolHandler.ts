@@ -25,7 +25,8 @@ const TOOL_DEFINITIONS = [
         content: { type: "string", description: "Context content to save" },
         source: { type: "string", description: "Source of the context", default: "mcp" },
         metadata: { type: "object", description: "Additional metadata" },
-        crossProject: { type: "boolean", description: "Include recent contexts from ALL projects when detecting dependencies (default: false)" }
+        crossProject: { type: "boolean", description: "Include recent contexts from ALL projects when detecting dependencies (default: false)" },
+        authorType: { type: "string", enum: ["human", "ai-agent", "ai-compositor"], description: "Author type for governance attribution (stored in metadata.authorType)" }
       },
       required: ["project", "content"]
     }
@@ -40,7 +41,7 @@ const TOOL_DEFINITIONS = [
         limit: { type: "number", description: "Maximum contexts to return", default: 1 },
         personality_mode: {
           type: "string",
-          enum: ["historian", "prophet", "archaeologist", "minimalist"],
+          enum: ["historian", "prophet", "archaeologist", "minimalist", "auditor"],
           description: "Temporal posture: historian=causal+timestamps, prophet=prediction-ranked, archaeologist=dormant-first, minimalist=raw",
           default: "historian"
         }
@@ -58,7 +59,7 @@ const TOOL_DEFINITIONS = [
         project: { type: "string", description: "Project to search within" },
         personality_mode: {
           type: "string",
-          enum: ["historian", "prophet", "archaeologist", "minimalist"],
+          enum: ["historian", "prophet", "archaeologist", "minimalist", "auditor"],
           description: "Temporal posture shaping result ranking and presentation",
           default: "historian"
         }
@@ -191,6 +192,43 @@ const TOOL_DEFINITIONS = [
         project: { type: "string", description: "Project identifier" }
       },
       required: ["project"]
+    }
+  },
+  // v3.5.0: Observability + Rune Integration
+  {
+    name: "get_causal_graph",
+    description: "Get the full causal network for a project as nodes and edges — suitable for D3/Mermaid graph visualization",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Project identifier" },
+        limit: { type: "number", description: "Maximum contexts to include (default: 200)" }
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "get_memory_health",
+    description: "Get a consolidated health report for a project — all 5 layers (tiers, causality, predictions, learning) in one call",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Project identifier" }
+      },
+      required: ["project"]
+    }
+  },
+  {
+    name: "ingest_rune_manifest",
+    description: "Import a rune.schema.json manifest — saves each binding intent annotation as a Wake context, connecting Rune governance to Wake causal memory",
+    inputSchema: {
+      type: "object",
+      properties: {
+        manifest: { type: "string", description: "JSON string of a rune.schema.json manifest" },
+        project: { type: "string", description: "Project to save contexts under" },
+        source: { type: "string", description: "Source label (default: rune-manifest)" }
+      },
+      required: ["manifest", "project"]
     }
   },
   // Cross-project causality
