@@ -200,6 +200,12 @@ export interface ContextSnapshot {
  * - metadata: Optional extensible semantics
  * - causality: Optional causality metadata (Layer 1: Past)
  */
+/**
+ * Author type for governance attribution (Layer 5: Auditor mode).
+ * Mirrors RECALL's CREATED-BY enum — same three values.
+ */
+export type AuthorType = 'human' | 'ai-agent' | 'ai-compositor';
+
 export interface SaveContextInput {
   /** Semantic domain identifier (required) */
   project: string;
@@ -218,6 +224,93 @@ export interface SaveContextInput {
 
   /** Cross-project dependency detection: include recent contexts from ALL projects */
   crossProject?: boolean;
+
+  /** Optional author type for governance attribution (stored in metadata.authorType) */
+  authorType?: AuthorType;
+}
+
+/**
+ * Causal graph node — a context snapshot in graph form.
+ */
+export interface CausalGraphNode {
+  id: string;
+  project: string;
+  summary: string;
+  actionType: string;
+  memoryTier: string;
+  timestamp: string;
+  authorType?: string;
+}
+
+/**
+ * Causal graph edge — a directed relationship between two snapshots.
+ */
+export interface CausalGraphEdge {
+  from: string;
+  to: string;
+  type: 'caused_by' | 'dependency';
+}
+
+/**
+ * Full causal graph for a project — nodes + edges, ready for D3/Mermaid.
+ */
+export interface CausalGraph {
+  nodes: CausalGraphNode[];
+  edges: CausalGraphEdge[];
+  nodeCount: number;
+  edgeCount: number;
+}
+
+/**
+ * Consolidated memory health report — all 5 layers in one snapshot.
+ */
+export interface MemoryHealthReport {
+  project: string;
+  generatedAt: string;
+  memory: {
+    active: number;
+    recent: number;
+    archived: number;
+    expired: number;
+    total: number;
+  };
+  causality: {
+    totalWithCausality: number;
+    rootCauses: number;
+    averageChainLength: number;
+    actionTypeCounts: Record<string, number>;
+  };
+  propagation: {
+    totalContexts: number;
+    totalPredicted: number;
+    averagePredictionScore: number;
+  };
+  learning: {
+    sampleSize: number;
+    lastTuned: string | null;
+    weights: { temporal: number; causal: number; frequency: number };
+  };
+}
+
+/**
+ * Input for ingesting a Rune manifest into Wake.
+ */
+export interface IngestRuneManifestInput {
+  /** JSON string of a rune.schema.json manifest */
+  manifest: string;
+  /** Project to save contexts under */
+  project: string;
+  /** Source label (default: rune-manifest) */
+  source?: string;
+}
+
+/**
+ * Result of a Rune manifest ingestion.
+ */
+export interface IngestRuneManifestResult {
+  ingested: number;
+  skipped: number;
+  bindings: string[];
 }
 
 /**

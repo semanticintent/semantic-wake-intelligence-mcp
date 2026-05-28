@@ -36,7 +36,7 @@
 import type { IContextRepository } from '../../application/ports/IContextRepository';
 import type { IAIProvider } from '../../application/ports/IAIProvider';
 import type { IVectorRepository } from '../../application/ports/IVectorRepository';
-import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
+import type { SaveContextInput, LoadContextInput, SearchContextInput, CausalGraph, CausalGraphNode, CausalGraphEdge, MemoryHealthReport, IngestRuneManifestInput, IngestRuneManifestResult } from '../../types';
 import { ContextSnapshot } from '../models/ContextSnapshot';
 import { CausalityService } from './CausalityService';
 import { MemoryManagerService } from './MemoryManagerService';
@@ -106,11 +106,16 @@ export class ContextService {
     );
 
     // Step 3: Domain Entity Creation - Validate business rules
+    // Merge authorType into metadata if provided (stored as metadata.authorType)
+    const snapshotMetadata = input.authorType
+      ? { ...(input.metadata ?? {}), authorType: input.authorType }
+      : input.metadata;
+
     const snapshot = ContextSnapshot.create({
       project: input.project,
       summary,
       source: input.source,
-      metadata: input.metadata,
+      metadata: snapshotMetadata,
       tags,
       causality
     });
@@ -167,7 +172,7 @@ export class ContextService {
         .slice(0, boundedLimit)
         .map(r => ContextSnapshot.fromDatabase(r));
     } else {
-      // Historian / Minimalist: standard newest-first
+      // Historian / Minimalist / Auditor: standard newest-first (auditor groups in presentation layer)
       results = (await this.repository.findByProject(input.project, boundedLimit)).map(r => ContextSnapshot.fromDatabase(r));
     }
 
@@ -390,6 +395,137 @@ export class ContextService {
    * @param project - Project to analyze
    * @returns Statistics on prediction scores, reasons, accuracy
    */
+  /**
+   * 🎯 WAKE INTELLIGENCE v3.5.0: Get causal graph for a project (Visualization)
+   *
+   * Returns all contexts as nodes and their causal relationships as edges.
+   * Suitable for D3/Mermaid graph rendering.
+   */
+  async getCausalGraph(project: string, limit = 200): Promise<CausalGraph> {
+    const contexts = await this.repository.findByProject(project, limit);
+    const contextIds = new Set(contexts.map(c => c.id));
+
+    const nodes: CausalGraphNode[] = contexts.map(c => {
+      let authorType: string | undefined;
+      if (c.metadata) {
+        try {
+          const meta = JSON.parse(c.metadata) as Record<string, unknown>;
+          if (typeof meta.authorType === 'string') authorType = meta.authorType;
+        } catch { /* ignore */ }
+      }
+      return {
+        id: c.id,
+        project: c.project,
+        summary: c.summary,
+        actionType: c.causality?.actionType ?? 'conversation',
+        memoryTier: c.memoryTier,
+        timestamp: c.timestamp,
+        authorType,
+      };
+    });
+
+    const edges: CausalGraphEdge[] = [];
+    for (const c of contexts) {
+      if (c.causality?.causedBy && contextIds.has(c.causality.causedBy)) {
+        edges.push({ from: c.causality.causedBy, to: c.id, type: 'caused_by' });
+      }
+      for (const depId of c.causality?.dependencies ?? []) {
+        if (contextIds.has(depId) && depId !== c.causality?.causedBy) {
+          edges.push({ from: depId, to: c.id, type: 'dependency' });
+        }
+      }
+    }
+
+    return { nodes, edges, nodeCount: nodes.length, edgeCount: edges.length };
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE v3.5.0: Get consolidated memory health report
+   *
+   * Aggregates all 5 layers into a single diagnostic snapshot.
+   * Replaces 4–5 separate tool calls with one.
+   */
+  async getMemoryHealth(project: string): Promise<MemoryHealthReport> {
+    const [memory, causality, propagation, learning] = await Promise.all([
+      this.memoryManager.getMemoryStats(project),
+      this.causalityService.getCausalityStats(project),
+      this.getPropagationStats(project),
+      this.metaLearning.getLearningStats(project),
+    ]);
+
+    return {
+      project,
+      generatedAt: new Date().toISOString(),
+      memory,
+      causality,
+      propagation,
+      learning: {
+        sampleSize: learning.sampleSize,
+        lastTuned: learning.lastTuned,
+        weights: {
+          temporal: learning.currentWeights.temporalWeight,
+          causal: learning.currentWeights.causalWeight,
+          frequency: learning.currentWeights.frequencyWeight,
+        },
+      },
+    };
+  }
+
+  /**
+   * 🎯 WAKE INTELLIGENCE v3.5.0: Ingest a Rune manifest
+   *
+   * Parses a rune.schema.json and saves each binding's `?` intent
+   * annotation as a Wake context — linking Rune governance to Wake causal memory.
+   */
+  async ingestRuneManifest(input: IngestRuneManifestInput): Promise<IngestRuneManifestResult> {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(input.manifest) as Record<string, unknown>;
+    } catch {
+      throw new Error('Invalid manifest: could not parse JSON');
+    }
+
+    const bindings = parsed.bindings as Record<string, Record<string, unknown>> | undefined;
+    if (!bindings) return { ingested: 0, skipped: 0, bindings: [] };
+
+    let ingested = 0;
+    let skipped = 0;
+    const ingestedNames: string[] = [];
+
+    for (const [name, binding] of Object.entries(bindings)) {
+      const intent = binding.intent as string | undefined;
+      if (!intent) { skipped++; continue; }
+
+      const runeType = (binding.rune as string) ?? '?';
+      const content = `[rune:${runeType}] ${name}: ${intent}`;
+
+      const bindingMeta: Record<string, unknown> = { runeType, bindingName: name };
+      if (binding.type) bindingMeta.valueType = binding.type;
+      if (binding.min !== undefined) bindingMeta.min = binding.min;
+      if (binding.max !== undefined) bindingMeta.max = binding.max;
+      if (binding.enum) bindingMeta.enum = binding.enum;
+
+      await this.saveContext({
+        project: input.project,
+        content,
+        source: input.source ?? 'rune-manifest',
+        authorType: 'ai-compositor',
+        metadata: bindingMeta,
+        causality: {
+          actionType: 'decision',
+          rationale: intent,
+          dependencies: [],
+          causedBy: null,
+        },
+      });
+
+      ingested++;
+      ingestedNames.push(name);
+    }
+
+    return { ingested, skipped, bindings: ingestedNames };
+  }
+
   private async semanticSearch(query: string, project?: string): Promise<ContextSnapshot[]> {
     if (this.vectorRepository) {
       const vector = await this.aiProvider.generateEmbedding(query);

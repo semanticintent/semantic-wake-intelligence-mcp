@@ -44,6 +44,13 @@ export const PERSONALITY_MODES = {
     verbosity: 'none',
     description: 'Raw context only. No framing, no commentary.',
   },
+  auditor: {
+    focus: 'authorship',
+    tone: 'analytical',
+    depth: 'attribution',
+    verbosity: 'medium',
+    description: 'Groups contexts by author type: human, ai-agent, ai-compositor. Surfaces who created what.',
+  },
 } as const;
 
 export type PersonalityMode = keyof typeof PERSONALITY_MODES;
