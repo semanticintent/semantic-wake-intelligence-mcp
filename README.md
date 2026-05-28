@@ -18,6 +18,18 @@
 >
 > Reference implementation of Semantic Intent as Single Source of Truth patterns with hexagonal architecture.
 
+## What's New in v3.5.0
+
+**Observability + Rune Protocol Integration**
+
+- **`get_causal_graph`** — Full causal network as nodes + edges, ready for D3/Mermaid visualization
+- **`get_memory_health`** — All 5 layers in one diagnostic call (replaces 4–5 separate tool calls)
+- **`ingest_rune_manifest`** — Import a `rune.schema.json` manifest; each `?` intent annotation becomes a Wake causal memory entry
+- **`auditor` personality mode** — Groups contexts by author type: `human`, `ai-agent`, `ai-compositor`, `unattributed`
+- **`authorType` on `save_context`** — Governance attribution stored in `metadata.authorType`, readable by auditor mode and causal graph
+
+Total: **18 MCP tools**, **5 personality modes**, **231 tests**.
+
 ## 📚 Table of Contents
 
 - [Wake Intelligence Brain Architecture](#-wake-intelligence-brain-architecture)
@@ -119,12 +131,14 @@ Shapes **HOW** context is retrieved and presented via four temporal postures on 
 - ✅ `prophet` — ranked by Layer 4 prediction score; surfaces what you'll likely need next
 - ✅ `archaeologist` — most-dormant first (never-accessed sorted to top); resurfaces forgotten threads
 - ✅ `minimalist` — raw summaries only, no framing or metadata
+- ✅ `auditor` *(v3.5.0)* — groups contexts by author type: `👤 Human`, `🤖 AI Agent`, `🎼 AI Compositor`, `❓ Unattributed`
 
 **Use Cases:**
 - Re-entering a project after a long gap → `archaeologist` to find forgotten threads
 - Planning the next session → `prophet` to see what Layer 4 predicts you'll need
 - Scripted/automated consumers → `minimalist` for clean output
 - Default session continuity → `historian` for full decision context
+- Governance review → `auditor` to see which decisions were human vs. AI-originated
 
 ### **Temporal Intelligence Flow:**
 
@@ -135,10 +149,11 @@ Shapes **HOW** context is retrieved and presented via four temporal postures on 
 │                                                               │
 │  LAYER 5: PERSONALITY MODES (Presentation - HOW SURFACED)  │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │ • historian — newest-first, timestamps, causality   │    │
-│  │ • prophet   — ranked by Layer 4 prediction score    │    │
-│  │ • archaeologist — most-dormant contexts first       │    │
-│  │ • minimalist — raw summaries, no framing            │    │
+│  │ • historian     — newest-first, timestamps, causality    │    │
+│  │ • prophet       — ranked by Layer 4 prediction score    │    │
+│  │ • archaeologist — most-dormant contexts first            │    │
+│  │ • minimalist    — raw summaries, no framing              │    │
+│  │ • auditor       — grouped by author type (human/AI)      │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                            ▲                                  │
 │  LAYER 4: META-LEARNING ENGINE (Adaptive - HOW WELL)        │
@@ -378,7 +393,7 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 ## Features
 
 ### Core Context Management
-- **save_context**: Save conversation context with AI-powered summarization and auto-tagging; supports `crossProject: true` to detect dependencies across all projects
+- **save_context**: Save conversation context with AI-powered summarization and auto-tagging; supports `crossProject: true` for cross-project dependency detection; `authorType` (`human` | `ai-agent` | `ai-compositor`) for governance attribution
 - **load_context**: Retrieve relevant context for a project — pass `personality_mode` to shape retrieval (see Layer 5)
 - **search_context**: Semantic vector search (Cloudflare Vectorize) with keyword fallback — pass `personality_mode` to re-rank results
 
@@ -403,11 +418,17 @@ This project demonstrates **Domain-Driven Hexagonal Architecture** with clean se
 - **reindex_project**: Backfill semantic embeddings for historical snapshots
 
 ### Wake Intelligence Layer 5: Personality Modes (Presentation)
-Four temporal postures available on `load_context` and `search_context` via the `personality_mode` param:
+Five temporal postures available on `load_context` and `search_context` via the `personality_mode` param:
 - **`historian`** (default): Newest-first, timestamps, causality action type and rationale
 - **`prophet`**: Ranked by Layer 4 prediction score — surfaces what you are most likely to need next
 - **`archaeologist`**: Most-dormant contexts first (null `lastAccessed` sorted to top) — resurfaces forgotten threads
 - **`minimalist`**: Raw summaries only, no framing or metadata
+- **`auditor`** *(v3.5.0)*: Groups results by author type — human, ai-agent, ai-compositor, unattributed
+
+### Wake Intelligence v3.5.0: Observability + Rune Integration
+- **get_causal_graph**: Full project causal network as `{ nodes, edges }` — feed directly to D3 or Mermaid. Each node includes `id`, `summary`, `actionType`, `memoryTier`, `timestamp`, `authorType`
+- **get_memory_health**: Consolidated diagnostic report — all 5 layers in one call. Memory tiers + causality stats + prediction quality + learned weights
+- **ingest_rune_manifest**: Import a `rune.schema.json` manifest. Each binding with an `intent` (`?` rune annotation) is saved as a Wake context with `action_type: decision` and the intent as the rationale. Connects [Rune Protocol](https://rune.semanticintent.dev) governance declarations to Wake causal memory
 
 ## 🧪 Testing
 
