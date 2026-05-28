@@ -1,0 +1,37 @@
+# Test files
+**/*.test.ts
+coverage/
+vitest.config.ts
+tsconfig.json
+
+# Dev tooling
+.github/
+.vscode/
+biome.json
+wrangler.jsonc
+wrangler.jsonc.example
+worker-configuration.d.ts
+
+# Dev docs (keep README and LICENSE)
+docs/
+ARCHITECTURE.md
+BRAIN-ARCHITECTURE-IMPLEMENTATION-PLAN.md
+CHANGELOG.md
+CHANGELOG.md.bak
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+MIGRATION.md
+PHASE-1-COMPLETE.md
+PROJECT_INTERVIEW_GUIDE.md
+REBRANDING-COMPLETE.md
+REFACTORING_PLAN.md
+SECURITY.md
+SEMANTIC_ANCHORING_GOVERNANCE.md
+
+# Backup files
+**/*.backup
+
+# Misc
+.env*
+*.pid
+*.seed
