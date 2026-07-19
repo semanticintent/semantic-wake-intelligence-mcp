@@ -156,7 +156,7 @@ describe('Layer 5: Temporal Personality Modes', () => {
       const high = makeSnapshot({ summary: 'high score', propagation: { predictionScore: 0.8, lastPredicted: null, predictedNextAccess: null, propagationReason: [] } });
       repo.search.mockResolvedValue([low, high]);
 
-      const result = await service.searchContext({ query: 'q', personality_mode: 'prophet' });
+      const result = await service.searchContext({ query: 'query', personality_mode: 'prophet' });
 
       expect(result[0].summary).toBe('high score');
       expect(result[1].summary).toBe('low score');
@@ -167,7 +167,7 @@ describe('Layer 5: Temporal Personality Modes', () => {
       const never = makeSnapshot({ summary: 'dormant', lastAccessed: null });
       repo.search.mockResolvedValue([recent, never]);
 
-      const result = await service.searchContext({ query: 'q', personality_mode: 'archaeologist' });
+      const result = await service.searchContext({ query: 'query', personality_mode: 'archaeologist' });
 
       expect(result[0].summary).toBe('dormant');
     });
@@ -177,7 +177,7 @@ describe('Layer 5: Temporal Personality Modes', () => {
       const b = makeSnapshot({ summary: 'second result' });
       repo.search.mockResolvedValue([a, b]);
 
-      const result = await service.searchContext({ query: 'q', personality_mode: 'historian' });
+      const result = await service.searchContext({ query: 'query', personality_mode: 'historian' });
 
       expect(result[0].summary).toBe('first result');
     });

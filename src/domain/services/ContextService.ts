@@ -356,6 +356,22 @@ export class ContextService {
     return indexed;
   }
 
+  async reindexAll(): Promise<{ total: number; byProject: Record<string, number> }> {
+    if (!this.vectorRepository) return { total: 0, byProject: {} };
+    const contexts = await this.repository.findAll(2000);
+    const byProject: Record<string, number> = {};
+    let total = 0;
+    for (const context of contexts) {
+      const vector = await this.aiProvider.generateEmbedding(context.summary);
+      if (vector.length > 0) {
+        await this.vectorRepository.upsert(context.id, vector, context.project);
+        byProject[context.project] = (byProject[context.project] ?? 0) + 1;
+        total++;
+      }
+    }
+    return { total, byProject };
+  }
+
   /**
    * 🎯 WAKE INTELLIGENCE: Get high-value contexts for pre-fetching (Layer 3)
    *
@@ -539,8 +555,11 @@ export class ContextService {
         }
       }
     }
-    // Fallback: keyword search
-    const results = await this.repository.search(query, project);
+    // Fallback: keyword search on first meaningful token only
+    // Guards against: single-char queries matching everything, full-phrase queries matching nothing
+    const tokens = query.split(/\s+/).filter(t => t.length >= 3);
+    if (tokens.length === 0) return [];
+    const results = await this.repository.search(tokens[0], project);
     return results.map(r => ContextSnapshot.fromDatabase(r));
   }
 

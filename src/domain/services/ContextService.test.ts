@@ -299,7 +299,7 @@ describe('ContextService Domain Service', () => {
       const results = await contextService.searchContext(input);
 
       // Assert
-      expect(mockRepository.search).toHaveBeenCalledWith('search term', undefined);
+      expect(mockRepository.search).toHaveBeenCalledWith('search', undefined);
       expect(results).toHaveLength(1);
       expect(results[0].summary).toBe('Summary containing search term');
     });
@@ -317,7 +317,7 @@ describe('ContextService Domain Service', () => {
       await contextService.searchContext(input);
 
       // Assert
-      expect(mockRepository.search).toHaveBeenCalledWith('search term', 'specific-project');
+      expect(mockRepository.search).toHaveBeenCalledWith('search', 'specific-project');
     });
 
     it('should handle no search results', async () => {

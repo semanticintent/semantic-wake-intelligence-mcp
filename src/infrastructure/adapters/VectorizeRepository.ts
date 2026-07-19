@@ -11,7 +11,9 @@ export class VectorizeRepository implements IVectorRepository {
     const options: VectorizeQueryOptions = { topK: limit, returnMetadata: 'none' };
     if (project) options.filter = { project };
     const result = await this.index.query(vector, options);
-    return result.matches.map(m => m.id);
+    return result.matches
+      .filter(m => m.score >= 0.6)
+      .map(m => m.id);
   }
 
   async delete(id: string): Promise<void> {

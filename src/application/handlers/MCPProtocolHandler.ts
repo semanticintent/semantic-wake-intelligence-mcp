@@ -194,6 +194,15 @@ const TOOL_DEFINITIONS = [
       required: ["project"]
     }
   },
+  {
+    name: "admin_reindex_all",
+    description: "Backfill semantic embeddings for ALL existing contexts across every project — run once after initial setup to enable semantic search on historical snapshots",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
   // v3.5.0: Observability + Rune Integration
   {
     name: "get_causal_graph",
