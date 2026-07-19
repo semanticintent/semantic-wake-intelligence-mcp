@@ -97,6 +97,9 @@ export class ToolExecutionHandler {
       case 'ingest_rune_manifest':
         return this.handleIngestRuneManifest(args as IngestRuneManifestInput);
 
+      case 'admin_reindex_all':
+        return this.handleAdminReindexAll();
+
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -652,6 +655,27 @@ ${reasonsText || '  - No predictions yet'}`;
       content: [{
         type: "text",
         text: statsText
+      }]
+    };
+  }
+
+  private async handleAdminReindexAll(): Promise<ToolResult> {
+    const result = await this.contextService.reindexAll();
+    if (result.total === 0) {
+      return {
+        content: [{
+          type: "text",
+          text: "No contexts reindexed. Either no contexts exist or the vector index is not configured."
+        }]
+      };
+    }
+    const breakdown = Object.entries(result.byProject)
+      .map(([project, count]) => `  - ${project}: ${count}`)
+      .join('\n');
+    return {
+      content: [{
+        type: "text",
+        text: `Reindexed ${result.total} contexts across all projects — semantic search now covers all historical snapshots.\n\n**By project:**\n${breakdown}`
       }]
     };
   }
