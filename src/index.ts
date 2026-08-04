@@ -23,6 +23,8 @@
 import { D1ContextRepository } from './infrastructure/adapters/D1ContextRepository';
 import { CloudflareAIProvider } from './infrastructure/adapters/CloudflareAIProvider';
 import { VectorizeRepository } from './infrastructure/adapters/VectorizeRepository';
+import { JWKSTokenValidator } from './infrastructure/adapters/JWKSTokenValidator';
+import { AuthMiddleware } from './infrastructure/middleware/AuthMiddleware';
 
 // Domain Layer
 import { ContextService } from './domain/services/ContextService';
@@ -48,12 +50,22 @@ import type { Env } from './types';
  */
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+
+    // RFC 9728 Protected Resource Metadata — lets MCP clients auto-discover which
+    // authorization server (Signet) protects this resource server, per the current MCP
+    // authorization spec's client-discovery expectations. Public, unauthenticated.
+    if (request.method === 'GET' && url.pathname === '/.well-known/oauth-protected-resource') {
+      return Response.json({
+        resource: env.MCP_RESOURCE_IDENTIFIER,
+        authorization_servers: [env.SIGNET_ISSUER],
+      });
+    }
+
     // Auth check — skip for OPTIONS (CORS preflight)
     if (request.method !== 'OPTIONS') {
-      const auth = request.headers.get('Authorization');
-      if (!env.MCP_SECRET || auth !== `Bearer ${env.MCP_SECRET}`) {
-        return new Response('Unauthorized', { status: 401 });
-      }
+      const unauthorized = await this.enforceAuth(request, env);
+      if (unauthorized) return unauthorized;
     }
 
     try {
@@ -82,6 +94,29 @@ export default {
         headers: { 'Content-Type': 'text/plain' }
       });
     }
+  },
+
+  /**
+   * 🎯 SEMANTIC INTENT: Bearer Token Enforcement (Signet cutover)
+   *
+   * AUTH_MODE gates between the legacy static-secret check and real Signet-issued JWT
+   * verification, giving a safe rollback window during cutover. Remove this branch (and
+   * MCP_SECRET/AUTH_MODE from Env) once the JWT path is validated in production.
+   *
+   * @returns the 401 Response to send if unauthorized, or null if the request may proceed
+   */
+  async enforceAuth(request: Request, env: Env): Promise<Response | null> {
+    if (env.AUTH_MODE === 'legacy_secret') {
+      const auth = request.headers.get('Authorization');
+      if (!env.MCP_SECRET || auth !== `Bearer ${env.MCP_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      return null;
+    }
+
+    const tokenValidator = new JWKSTokenValidator(`${env.SIGNET_ISSUER}/.well-known/jwks.json`, env.SIGNET_ISSUER);
+    const authMiddleware = new AuthMiddleware(tokenValidator);
+    return authMiddleware.enforce(request, env.MCP_RESOURCE_IDENTIFIER);
   },
 
   /**

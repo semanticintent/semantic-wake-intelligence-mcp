@@ -20,7 +20,18 @@ export interface Env {
   DB: D1Database;
   AI: Ai;
   VECTORIZE: VectorizeIndex;
+  /** @deprecated Static shared-secret auth, superseded by Signet-issued JWT verification.
+   * Kept only for the rollback window during cutover — remove alongside AUTH_MODE once the
+   * JWT path is validated in production. */
   MCP_SECRET: string;
+  /** 'legacy_secret' | 'jwt' — rollback switch during the Signet cutover; remove once validated. */
+  AUTH_MODE: string;
+  /** Signet's issuer URL for this environment — must pair 1:1 with the deployed Signet env
+   * (dev/staging/production), never cross-environment. */
+  SIGNET_ISSUER: string;
+  /** This resource server's own RFC 8707 resource identifier, e.g. "wake". A token issued for
+   * any other resource must be rejected even if otherwise valid. */
+  MCP_RESOURCE_IDENTIFIER: string;
 }
 
 /**

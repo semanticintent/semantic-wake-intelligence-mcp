@@ -6,6 +6,15 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	// AUTH_MODE stays "legacy_secret" everywhere until each environment's JWT path (Signet
+	// issuer + MCP_RESOURCE_IDENTIFIER) has been validated — flip to "jwt" per-environment as a
+	// deliberate operational step, not as a side effect of adding these vars. Remove AUTH_MODE
+	// and MCP_SECRET entirely once the JWT path is validated in production.
+	"vars": {
+		"AUTH_MODE": "legacy_secret",
+		"SIGNET_ISSUER": "YOUR_SIGNET_DEV_ISSUER_URL_HERE",
+		"MCP_RESOURCE_IDENTIFIER": "wake"
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
@@ -31,5 +40,21 @@
 	// Scheduled cron: refresh stale Layer 3 predictions every 6 hours
 	"triggers": {
 		"crons": ["0 */6 * * *"]
+	},
+	"env": {
+		"staging": {
+			"vars": {
+				"AUTH_MODE": "legacy_secret",
+				"SIGNET_ISSUER": "YOUR_SIGNET_STAGING_ISSUER_URL_HERE",
+				"MCP_RESOURCE_IDENTIFIER": "wake"
+			}
+		},
+		"production": {
+			"vars": {
+				"AUTH_MODE": "legacy_secret",
+				"SIGNET_ISSUER": "YOUR_SIGNET_PRODUCTION_ISSUER_URL_HERE",
+				"MCP_RESOURCE_IDENTIFIER": "wake"
+			}
+		}
 	}
 }
