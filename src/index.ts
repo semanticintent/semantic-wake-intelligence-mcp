@@ -59,6 +59,7 @@ export default {
       return Response.json({
         resource: env.MCP_RESOURCE_IDENTIFIER,
         authorization_servers: [env.SIGNET_ISSUER],
+        scopes_supported: ['mcp:invoke'],
       });
     }
 
