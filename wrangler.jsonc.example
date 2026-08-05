@@ -25,15 +25,12 @@
 	"ai": {
 		"binding": "AI"
 	},
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "MCP_OBJECT",
-				"class_name": "ContextMCP",
-				"script_name": "semantic-context-mcp"
-			}
-		]
-	},
+	"vectorize": [
+		{
+			"binding": "VECTORIZE",
+			"index_name": "YOUR_VECTORIZE_INDEX_NAME_HERE"
+		}
+	],
 	"observability": {
 		"enabled": true
 	},
