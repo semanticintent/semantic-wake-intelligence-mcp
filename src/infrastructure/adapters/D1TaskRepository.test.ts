@@ -100,7 +100,7 @@ describe('D1TaskRepository', () => {
       db._setNextQueryRows([]);
       await repo.claimNext('codex-azure');
 
-      const sql: string = db.prepare.mock.calls[0][0];
+      const sql = (db.prepare.mock.calls as unknown[][])[0][0] as string;
       expect(sql).toContain('UPDATE agent_tasks');
       expect(sql).toContain('RETURNING');
       expect(sql).toContain("status = 'queued'");
@@ -118,7 +118,7 @@ describe('D1TaskRepository', () => {
       db._setNextQueryRows([]);
       await repo.find({ project: 'nt-alpha', status: 'queued' });
 
-      const sql: string = db.prepare.mock.calls[0][0];
+      const sql = (db.prepare.mock.calls as unknown[][])[0][0] as string;
       expect(sql).toContain('project = ?');
       expect(sql).toContain('status = ?');
     });
@@ -127,7 +127,7 @@ describe('D1TaskRepository', () => {
       db._setNextQueryRows([]);
       await repo.find({});
 
-      const sql: string = db.prepare.mock.calls[0][0];
+      const sql = (db.prepare.mock.calls as unknown[][])[0][0] as string;
       expect(sql).toContain('LIMIT ?');
     });
   });
@@ -136,7 +136,7 @@ describe('D1TaskRepository', () => {
     it('updates status to completed with result context IDs', async () => {
       await repo.complete('TASK-001', ['CTX-936', 'CTX-937']);
 
-      const sql: string = db.prepare.mock.calls[0][0];
+      const sql = (db.prepare.mock.calls as unknown[][])[0][0] as string;
       expect(sql).toContain("status = 'completed'");
       expect(sql).toContain('result_context_ids');
     });
@@ -146,7 +146,7 @@ describe('D1TaskRepository', () => {
     it('updates status to failed with reason', async () => {
       await repo.fail('TASK-001', 'NinjaTrader connection timed out');
 
-      const sql: string = db.prepare.mock.calls[0][0];
+      const sql = (db.prepare.mock.calls as unknown[][])[0][0] as string;
       expect(sql).toContain("status = 'failed'");
       expect(sql).toContain('failure_reason');
     });
