@@ -294,4 +294,16 @@ export interface IContextRepository {
    * @param weights - New learned weights to persist
    */
   saveProjectWeights(weights: ProjectWeights): Promise<void>;
+
+  /**
+   * 🎯 WAKE INTELLIGENCE: Link a result context to its causal parent (Layer 1: Causality)
+   *
+   * PURPOSE: Write the causal edge when a task completes with a sourceContextId.
+   * Called by TaskService.completeTask so the graph stays consistent regardless
+   * of which worker implementation ran the task.
+   *
+   * @param contextId - The result context to update
+   * @param causedBy  - The source context that spawned this work
+   */
+  updateCausedBy(contextId: string, causedBy: string): Promise<void>;
 }

@@ -50,6 +50,7 @@ class MockRepository implements IContextRepository {
   findOutcomesByProject = vi.fn();
   getProjectWeights = vi.fn().mockResolvedValue(null);
   saveProjectWeights = vi.fn();
+  updateCausedBy = vi.fn();
 }
 
 class MockAIProvider implements IAIProvider {

@@ -425,6 +425,12 @@ export class D1ContextRepository implements IContextRepository {
     ).bind(id).run();
   }
 
+  async updateCausedBy(contextId: string, causedBy: string): Promise<void> {
+    await this.db.prepare(
+      `UPDATE context_snapshots SET caused_by = ? WHERE id = ?`
+    ).bind(causedBy, contextId).run();
+  }
+
   /**
    * 🎯 WAKE INTELLIGENCE: Find stale predictions (Layer 3: Propagation Engine)
    *

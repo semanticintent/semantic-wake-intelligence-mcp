@@ -80,7 +80,7 @@ export default {
 
       // LAYER 2: Domain - Business logic
       const contextService = new ContextService(repository, aiProvider, vectorRepository);
-      const taskService = new TaskService(taskRepository);
+      const taskService = new TaskService(taskRepository, repository);
 
       // LAYER 3: Application - Orchestration
       const toolHandler = new ToolExecutionHandler(contextService, taskService);

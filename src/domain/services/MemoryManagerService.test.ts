@@ -75,6 +75,7 @@ describe('MemoryManagerService', () => {
       findOutcomesByProject: vi.fn().mockResolvedValue([]),
       getProjectWeights: vi.fn().mockResolvedValue(null),
       saveProjectWeights: vi.fn().mockResolvedValue(undefined),
+      updateCausedBy: vi.fn().mockResolvedValue(undefined),
     };
     service = new MemoryManagerService(mockRepo);
   });

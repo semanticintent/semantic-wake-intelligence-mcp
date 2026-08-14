@@ -39,6 +39,7 @@ class MockContextRepository implements IContextRepository {
   findOutcomesByProject = vi.fn();
   getProjectWeights = vi.fn();
   saveProjectWeights = vi.fn();
+  updateCausedBy = vi.fn();
 }
 
 describe('CausalityService (Layer 1: Past)', () => {

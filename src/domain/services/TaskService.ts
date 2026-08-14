@@ -1,4 +1,5 @@
 import type { ITaskRepository } from '../../application/ports/ITaskRepository';
+import type { IContextRepository } from '../../application/ports/IContextRepository';
 import { AgentTask } from '../models/AgentTask';
 import type { AgentTask as IAgentTask, AgentTaskStatus, CreateTaskInput, GetTasksInput } from '../../types';
 
@@ -8,7 +9,10 @@ import type { AgentTask as IAgentTask, AgentTaskStatus, CreateTaskInput, GetTask
  * D1TaskRepository (atomic claiming). This is the application seam.
  */
 export class TaskService {
-  constructor(private readonly taskRepository: ITaskRepository) {}
+  constructor(
+    private readonly taskRepository: ITaskRepository,
+    private readonly contextRepository: IContextRepository,
+  ) {}
 
   async createTask(input: CreateTaskInput): Promise<IAgentTask> {
     const task = AgentTask.create(input);
@@ -31,6 +35,16 @@ export class TaskService {
 
   async completeTask(taskId: string, resultContextIds: string[]): Promise<void> {
     await this.taskRepository.complete(taskId, resultContextIds);
+
+    // Write causal edges: sourceContextId → each resultContextId
+    if (resultContextIds.length === 0) return;
+    const task = await this.taskRepository.findById(taskId);
+    if (!task?.sourceContextId) return;
+    await Promise.all(
+      resultContextIds.map(ctxId =>
+        this.contextRepository.updateCausedBy(ctxId, task.sourceContextId!)
+      )
+    );
   }
 
   async failTask(taskId: string, reason: string): Promise<void> {
