@@ -13,6 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ToolExecutionHandler } from './ToolExecutionHandler';
 import type { ContextService } from '../../domain/services/ContextService';
+import type { TaskService } from '../../domain/services/TaskService';
 import { ContextSnapshot } from '../../domain/models/ContextSnapshot';
 import { MemoryTier } from '../../types';
 import type { SaveContextInput, LoadContextInput, SearchContextInput } from '../../types';
@@ -24,13 +25,26 @@ class MockContextService {
   searchContext = vi.fn();
 }
 
+class MockTaskService {
+  createTask = vi.fn();
+  claimNextTask = vi.fn();
+  getTasks = vi.fn();
+  completeTask = vi.fn();
+  failTask = vi.fn();
+}
+
 describe('ToolExecutionHandler', () => {
   let handler: ToolExecutionHandler;
   let mockService: MockContextService;
+  let mockTaskService: MockTaskService;
 
   beforeEach(() => {
     mockService = new MockContextService();
-    handler = new ToolExecutionHandler(mockService as unknown as ContextService);
+    mockTaskService = new MockTaskService();
+    handler = new ToolExecutionHandler(
+      mockService as unknown as ContextService,
+      mockTaskService as unknown as TaskService
+    );
   });
 
   describe('execute()', () => {

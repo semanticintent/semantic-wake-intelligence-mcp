@@ -467,6 +467,57 @@ export interface LearningStats {
   avgFrequencyComponent: number;
 }
 
+// ─── Agent Task Coordination (v3.7.0) ─────────────────────────────────────────
+
+/** Lifecycle states for a delegated agent task. */
+export type AgentTaskStatus = 'queued' | 'claimed' | 'completed' | 'failed';
+
+/**
+ * Lightweight work-item for delegating investigation or execution between agents.
+ * Tasks are transient coordination state; contexts are the durable knowledge they produce.
+ */
+export interface AgentTask {
+  id: string;
+  project: string;
+  objective: string;
+  requestedBy: string;
+  assignedTo: string | null;
+  status: AgentTaskStatus;
+  sourceContextId: string | null;
+  resultContextIds: string[];
+  failureReason: string | null;
+  claimedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaskInput {
+  project: string;
+  objective: string;
+  requestedBy: string;
+  assignedTo?: string;
+  sourceContextId?: string;
+}
+
+export interface GetTasksInput {
+  project?: string;
+  status?: AgentTaskStatus;
+  assignedTo?: string;
+  limit?: number;
+}
+
+export interface CompleteTaskInput {
+  taskId: string;
+  resultContextIds?: string[];
+}
+
+export interface FailTaskInput {
+  taskId: string;
+  reason: string;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 /**
  * 🎯 TYPE GUARD: Runtime Type Validation
  *

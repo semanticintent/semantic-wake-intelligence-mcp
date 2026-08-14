@@ -251,6 +251,71 @@ const TOOL_DEFINITIONS = [
       },
       required: ["snapshotId"]
     }
+  },
+  // v3.7.0: Agent Task Coordination
+  {
+    name: "create_task",
+    description: "Delegate an investigation or execution task to another agent (e.g. Codex on Azure). Returns immediately — the delegating agent does not wait.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Project this task belongs to" },
+        objective: { type: "string", description: "What the assigned agent should investigate or do" },
+        requestedBy: { type: "string", description: "Identifier of the agent creating this task (e.g. 'claude-mac')" },
+        assignedTo: { type: "string", description: "Agent that should claim this task (e.g. 'codex-azure'). Omit to allow any agent to claim." },
+        sourceContextId: { type: "string", description: "Wake context ID that motivated this task — links the task to the causal chain" }
+      },
+      required: ["project", "objective", "requestedBy"]
+    }
+  },
+  {
+    name: "claim_task",
+    description: "Atomically claim the next available queued task for this agent. Only one agent wins when multiple poll simultaneously.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agent: { type: "string", description: "Identifier of the agent claiming the task (e.g. 'codex-azure')" }
+      },
+      required: ["agent"]
+    }
+  },
+  {
+    name: "get_tasks",
+    description: "List agent tasks, optionally filtered by project, status, or assigned agent.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Filter by project" },
+        status: { type: "string", enum: ["queued", "claimed", "completed", "failed"], description: "Filter by task status" },
+        assignedTo: { type: "string", description: "Filter by assigned agent" },
+        limit: { type: "number", description: "Maximum tasks to return (default: 20, max: 100)" }
+      },
+      required: []
+    }
+  },
+  {
+    name: "complete_task",
+    description: "Mark a task as completed and link the Wake context IDs produced by the work.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        taskId: { type: "string", description: "ID of the task to complete" },
+        resultContextIds: { type: "array", items: { type: "string" }, description: "Wake context IDs of discoveries saved during this task" }
+      },
+      required: ["taskId"]
+    }
+  },
+  {
+    name: "fail_task",
+    description: "Mark a task as failed with a reason. The requesting agent can inspect and re-create the task if needed.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        taskId: { type: "string", description: "ID of the task to fail" },
+        reason: { type: "string", description: "Why the task failed" }
+      },
+      required: ["taskId", "reason"]
+    }
   }
 ];
 

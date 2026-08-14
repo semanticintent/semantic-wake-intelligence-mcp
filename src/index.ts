@@ -21,6 +21,7 @@
 
 // Infrastructure Layer
 import { D1ContextRepository } from './infrastructure/adapters/D1ContextRepository';
+import { D1TaskRepository } from './infrastructure/adapters/D1TaskRepository';
 import { CloudflareAIProvider } from './infrastructure/adapters/CloudflareAIProvider';
 import { VectorizeRepository } from './infrastructure/adapters/VectorizeRepository';
 import { JWKSTokenValidator } from './infrastructure/adapters/JWKSTokenValidator';
@@ -28,6 +29,7 @@ import { AuthMiddleware } from './infrastructure/middleware/AuthMiddleware';
 
 // Domain Layer
 import { ContextService } from './domain/services/ContextService';
+import { TaskService } from './domain/services/TaskService';
 
 // Application Layer
 import { ToolExecutionHandler } from './application/handlers/ToolExecutionHandler';
@@ -72,14 +74,16 @@ export default {
     try {
       // LAYER 1: Infrastructure - Technical adapters
       const repository = new D1ContextRepository(env.DB);
+      const taskRepository = new D1TaskRepository(env.DB);
       const aiProvider = new CloudflareAIProvider(env.AI);
       const vectorRepository = new VectorizeRepository(env.VECTORIZE);
 
       // LAYER 2: Domain - Business logic
       const contextService = new ContextService(repository, aiProvider, vectorRepository);
+      const taskService = new TaskService(taskRepository);
 
       // LAYER 3: Application - Orchestration
-      const toolHandler = new ToolExecutionHandler(contextService);
+      const toolHandler = new ToolExecutionHandler(contextService, taskService);
       const protocolHandler = new MCPProtocolHandler(toolHandler);
 
       // LAYER 4: Presentation - Routing

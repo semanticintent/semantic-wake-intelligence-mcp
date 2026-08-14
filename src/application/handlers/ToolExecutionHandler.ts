@@ -16,7 +16,8 @@
  */
 
 import type { ContextService } from '../../domain/services/ContextService';
-import type { ToolResult, SaveContextInput, LoadContextInput, SearchContextInput, IngestRuneManifestInput } from '../../types';
+import type { TaskService } from '../../domain/services/TaskService';
+import type { ToolResult, SaveContextInput, LoadContextInput, SearchContextInput, IngestRuneManifestInput, CreateTaskInput, GetTasksInput, CompleteTaskInput, FailTaskInput } from '../../types';
 import { ContextSnapshot } from '../../domain/models/ContextSnapshot';
 
 /**
@@ -28,7 +29,10 @@ import { ContextSnapshot } from '../../domain/models/ContextSnapshot';
  * - Formats results for MCP protocol
  */
 export class ToolExecutionHandler {
-  constructor(private readonly contextService: ContextService) {}
+  constructor(
+    private readonly contextService: ContextService,
+    private readonly taskService: TaskService
+  ) {}
 
   /**
    * 🎯 SEMANTIC INTENT: Execute MCP tool by semantic name
@@ -99,6 +103,22 @@ export class ToolExecutionHandler {
 
       case 'admin_reindex_all':
         return this.handleAdminReindexAll();
+
+      // Agent Task Coordination (v3.7.0)
+      case 'create_task':
+        return this.handleCreateTask(args as CreateTaskInput);
+
+      case 'claim_task':
+        return this.handleClaimTask(args as { agent: string });
+
+      case 'get_tasks':
+        return this.handleGetTasks(args as GetTasksInput);
+
+      case 'complete_task':
+        return this.handleCompleteTask(args as CompleteTaskInput);
+
+      case 'fail_task':
+        return this.handleFailTask(args as FailTaskInput);
 
       default:
         throw new Error(`Unknown tool: ${toolName}`);
@@ -676,6 +696,78 @@ ${reasonsText || '  - No predictions yet'}`;
       content: [{
         type: "text",
         text: `Reindexed ${result.total} contexts across all projects — semantic search now covers all historical snapshots.\n\n**By project:**\n${breakdown}`
+      }]
+    };
+  }
+
+  // ─── Agent Task Coordination (v3.7.0) ───────────────────────────────────────
+
+  private async handleCreateTask(input: CreateTaskInput): Promise<ToolResult> {
+    const task = await this.taskService.createTask(input);
+    const assignee = task.assignedTo ? ` → assigned to ${task.assignedTo}` : ' → open to any agent';
+    return {
+      content: [{
+        type: "text",
+        text: `Task created!\nID: ${task.id}\nProject: ${task.project}\nObjective: ${task.objective}\nStatus: ${task.status}${assignee}${task.sourceContextId ? `\nSource context: ${task.sourceContextId}` : ''}`
+      }]
+    };
+  }
+
+  private async handleClaimTask(input: { agent: string }): Promise<ToolResult> {
+    const task = await this.taskService.claimNextTask(input.agent);
+    if (!task) {
+      return {
+        content: [{ type: "text", text: "No tasks available to claim." }]
+      };
+    }
+    return {
+      content: [{
+        type: "text",
+        text: `Task claimed!\nID: ${task.id}\nProject: ${task.project}\nObjective: ${task.objective}\nClaimed by: ${task.assignedTo}\nClaimed at: ${task.claimedAt}${task.sourceContextId ? `\nSource context: ${task.sourceContextId}` : ''}`
+      }]
+    };
+  }
+
+  private async handleGetTasks(input: GetTasksInput): Promise<ToolResult> {
+    const tasks = await this.taskService.getTasks(input);
+    if (tasks.length === 0) {
+      return {
+        content: [{ type: "text", text: "No tasks found matching the given filters." }]
+      };
+    }
+    const lines = tasks.map(t => {
+      const assignee = t.assignedTo ? ` | assignedTo: ${t.assignedTo}` : '';
+      const results = t.resultContextIds.length > 0 ? ` | results: [${t.resultContextIds.join(', ')}]` : '';
+      return `- [${t.status.toUpperCase()}] ${t.id} | ${t.project} | ${t.objective}${assignee}${results}`;
+    });
+    return {
+      content: [{
+        type: "text",
+        text: `Found ${tasks.length} task(s):\n${lines.join('\n')}`
+      }]
+    };
+  }
+
+  private async handleCompleteTask(input: CompleteTaskInput): Promise<ToolResult> {
+    const contextIds = input.resultContextIds ?? [];
+    await this.taskService.completeTask(input.taskId, contextIds);
+    const linked = contextIds.length > 0
+      ? `\nLinked context(s): ${contextIds.join(', ')}`
+      : '';
+    return {
+      content: [{
+        type: "text",
+        text: `Task ${input.taskId} marked completed.${linked}`
+      }]
+    };
+  }
+
+  private async handleFailTask(input: FailTaskInput): Promise<ToolResult> {
+    await this.taskService.failTask(input.taskId, input.reason);
+    return {
+      content: [{
+        type: "text",
+        text: `Task ${input.taskId} marked failed.\nReason: ${input.reason}`
       }]
     };
   }
