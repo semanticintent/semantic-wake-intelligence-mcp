@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-231%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
+[![Tests](https://img.shields.io/badge/tests-265%20passing-brightgreen.svg)](https://github.com/semanticintent/semantic-wake-intelligence-mcp)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 
@@ -18,7 +18,37 @@
 >
 > Reference implementation of Semantic Intent as Single Source of Truth patterns with hexagonal architecture.
 
-## What's New in v3.5.0
+## What's New in v3.7.0
+
+**Agent Task Coordination**
+
+A multi-agent work queue built directly into Wake — any model (Claude session, local LLM, Ollama,
+custom script) can claim tasks and save discoveries back as causal context. Intended for
+token-expensive work (heavy log parsing, large backtests, diagnostic sweeps) that runs cheaper
+off the main session.
+
+- **`create_task`** — Enqueue an objective for an agent to work on
+- **`claim_task`** — Atomically claim the next queued task for a given agent ID (safe under concurrent workers)
+- **`get_tasks`** — List tasks filtered by project, status, or assigned agent
+- **`complete_task`** — Mark a task done and link the result context IDs
+- **`fail_task`** — Record a failure reason for visibility and retry logic
+
+See `wake-worker/` in this repo for a ready-to-run headless worker that authenticates via
+[Signet](https://github.com/semanticintent/signet) `client_credentials` and polls for tasks.
+
+Total: **24 MCP tools**, **5 personality modes**, **265 tests**.
+
+## Previous: v3.6.0
+
+**Semantic Search Quality + Admin Reindex**
+
+- Vectorize results below 0.6 cosine similarity are filtered — eliminates false positives
+- `search_context` tokenizes queries on meaningful words (3+ chars) so single-char queries
+  and long natural-language phrases both route correctly
+- **`admin_reindex_all`** — Cross-project backfill that embeds all D1 contexts into Vectorize
+  in one call; run once after setup or after a dry Vectorize index
+
+## Previous: v3.5.0
 
 **Observability + Rune Protocol Integration**
 
@@ -27,8 +57,6 @@
 - **`ingest_rune_manifest`** — Import a `rune.schema.json` manifest; each `?` intent annotation becomes a Wake causal memory entry
 - **`auditor` personality mode** — Groups contexts by author type: `human`, `ai-agent`, `ai-compositor`, `unattributed`
 - **`authorType` on `save_context`** — Governance attribution stored in `metadata.authorType`, readable by auditor mode and causal graph
-
-Total: **18 MCP tools**, **5 personality modes**, **231 tests**.
 
 ## 📚 Table of Contents
 
@@ -304,27 +332,38 @@ You can connect to your MCP server from the Cloudflare AI Playground, which is a
 
 ## Connect Claude Desktop to your MCP server
 
-You can also connect to your remote MCP server from local MCP clients, by using the [mcp-remote proxy](https://www.npmjs.com/package/mcp-remote). 
+Wake uses JWT auth via [Signet](https://github.com/semanticintent/signet) — an OAuth 2.1
+Authorization Server. The first connection triggers a one-time browser login (OTP email);
+subsequent connections use the cached refresh token automatically.
 
-To connect to your MCP server from Claude Desktop, follow [Anthropic's Quickstart](https://modelcontextprotocol.io/quickstart/user) and within Claude Desktop go to Settings > Developer > Edit Config.
-
-Update with this configuration:
+**With `mcp-remote` (interactive/human clients):**
 
 ```json
 {
   "mcpServers": {
-    "semantic-context": {
+    "wake": {
       "command": "npx",
       "args": [
         "mcp-remote",
-        "http://localhost:8787/sse"  // or semantic-wake-intelligence-mcp.your-account.workers.dev/sse
+        "https://wake.shatny.dev/sse"
       ]
     }
   }
 }
 ```
 
-Restart Claude and you should see the tools become available.
+**With a headless worker (automated agents):**
+
+Use `client_credentials` auth — no browser required. See `wake-worker/` for a
+ready-to-run polling worker that fetches a token from Signet and connects via
+`StreamableHTTPClientTransport`.
+
+```bash
+cd wake-worker
+echo "WORKER_AGENT_SECRET=<your-secret>" > .env
+node --env-file=.env worker.mjs --test-auth   # verify auth
+node --env-file=.env worker.mjs               # start polling
+```
 
 ## 🏗️ Architecture
 
@@ -430,9 +469,16 @@ Five temporal postures available on `load_context` and `search_context` via the 
 - **get_memory_health**: Consolidated diagnostic report — all 5 layers in one call. Memory tiers + causality stats + prediction quality + learned weights
 - **ingest_rune_manifest**: Import a `rune.schema.json` manifest. Each binding with an `intent` (`?` rune annotation) is saved as a Wake context with `action_type: decision` and the intent as the rationale. Connects [Rune Protocol](https://rune.semanticintent.dev) governance declarations to Wake causal memory
 
+### Agent Task Coordination (v3.7.0)
+- **create_task**: Enqueue an objective for a named agent to work on, scoped to a project
+- **claim_task**: Atomically claim the next queued task (safe for concurrent workers — backed by `UPDATE...WHERE subquery...RETURNING`)
+- **get_tasks**: List tasks filtered by `project`, `status`, or `assignedTo`
+- **complete_task**: Mark a task done and attach result context IDs linking the discovery back to Wake's causal graph
+- **fail_task**: Record a failure reason — visibility for retry logic or human review
+
 ## 🧪 Testing
 
-This project includes comprehensive unit tests with **231 tests** covering all architectural layers.
+This project includes comprehensive unit tests with **265 tests** covering all architectural layers.
 
 ### Run Tests
 
@@ -453,9 +499,10 @@ npm run test:coverage
 ### Test Coverage
 
 - ✅ **Domain Layer**: 146 tests (ContextSnapshot, CausalityService, ContextService, MemoryManagerService, PropagationService, MetaLearningService)
-- ✅ **Application Layer**: 10 tests (ToolExecutionHandler, MCP tool dispatch)
-- ✅ **Infrastructure Layer**: 53 tests (D1Repository, VectorizeRepository, CloudflareAIProvider with fallbacks)
+- ✅ **Application Layer**: 36 tests (ToolExecutionHandler, MCP tool dispatch, AgentTask coordination)
+- ✅ **Infrastructure Layer**: 53 tests (D1Repository, VectorizeRepository, CloudflareAIProvider, D1TaskRepository)
 - ✅ **Presentation Layer**: 12 tests (MCPRouter, CORS, error handling)
+- ✅ **Domain Models**: 18 tests (AgentTask entity)
 
 ### Test Structure
 
