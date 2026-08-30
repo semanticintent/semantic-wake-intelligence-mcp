@@ -102,23 +102,15 @@ export default {
   },
 
   /**
-   * 🎯 SEMANTIC INTENT: Bearer Token Enforcement (Signet cutover)
+   * 🎯 SEMANTIC INTENT: Bearer Token Enforcement
    *
-   * AUTH_MODE gates between the legacy static-secret check and real Signet-issued JWT
-   * verification, giving a safe rollback window during cutover. Remove this branch (and
-   * MCP_SECRET/AUTH_MODE from Env) once the JWT path is validated in production.
+   * Verifies a Signet-issued, audience-bound JWT. The prior static-secret rollback path
+   * (AUTH_MODE === 'legacy_secret', MCP_SECRET) has been removed — production and staging
+   * were both validated on the JWT path, and the secret it depended on has been retired.
    *
    * @returns the 401 Response to send if unauthorized, or null if the request may proceed
    */
   async enforceAuth(request: Request, env: Env): Promise<Response | null> {
-    if (env.AUTH_MODE === 'legacy_secret') {
-      const auth = request.headers.get('Authorization');
-      if (!env.MCP_SECRET || auth !== `Bearer ${env.MCP_SECRET}`) {
-        return new Response('Unauthorized', { status: 401 });
-      }
-      return null;
-    }
-
     const tokenValidator = new JWKSTokenValidator(`${env.SIGNET_ISSUER}/.well-known/jwks.json`, env.SIGNET_ISSUER);
     const authMiddleware = new AuthMiddleware(tokenValidator);
     return authMiddleware.enforce(request, env.MCP_RESOURCE_IDENTIFIER);

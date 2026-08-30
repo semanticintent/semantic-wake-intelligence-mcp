@@ -6,14 +6,13 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	// AUTH_MODE stays "legacy_secret" everywhere until each environment's JWT path (Signet
-	// issuer + MCP_RESOURCE_IDENTIFIER) has been validated — flip to "jwt" per-environment as a
-	// deliberate operational step, not as a side effect of adding these vars. Remove AUTH_MODE
-	// and MCP_SECRET entirely once the JWT path is validated in production.
 	"vars": {
-		"AUTH_MODE": "legacy_secret",
 		"SIGNET_ISSUER": "YOUR_SIGNET_DEV_ISSUER_URL_HERE",
-		"MCP_RESOURCE_IDENTIFIER": "wake"
+		// Must be a full HTTPS URL, not a bare identifier — mcp-remote parses this via
+		// `new URL(resource).href`, which requires a real URL and normalizes in a trailing
+		// slash. Use that exact normalized form here too, or client discovery breaks silently.
+		// See docs/lessons-learned.md, 2026-08-05, items 1-2, in the Signet repo.
+		"MCP_RESOURCE_IDENTIFIER": "https://YOUR_RESOURCE_SERVER_DOMAIN_HERE/"
 	},
 	"d1_databases": [
 		{
@@ -41,16 +40,14 @@
 	"env": {
 		"staging": {
 			"vars": {
-				"AUTH_MODE": "legacy_secret",
 				"SIGNET_ISSUER": "YOUR_SIGNET_STAGING_ISSUER_URL_HERE",
-				"MCP_RESOURCE_IDENTIFIER": "wake"
+				"MCP_RESOURCE_IDENTIFIER": "https://YOUR_RESOURCE_SERVER_DOMAIN_HERE/"
 			}
 		},
 		"production": {
 			"vars": {
-				"AUTH_MODE": "legacy_secret",
 				"SIGNET_ISSUER": "YOUR_SIGNET_PRODUCTION_ISSUER_URL_HERE",
-				"MCP_RESOURCE_IDENTIFIER": "wake"
+				"MCP_RESOURCE_IDENTIFIER": "https://YOUR_RESOURCE_SERVER_DOMAIN_HERE/"
 			}
 		}
 	}
