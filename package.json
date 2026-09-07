@@ -57,7 +57,7 @@
 		"@cloudflare/vitest-pool-workers": "^0.18.8",
 		"@types/node": "^26.1.1",
 		"@vitest/coverage-v8": "^4.1.10",
-		"@vitest/ui": "^4.1.10",
+		"@vitest/ui": "^5.0.0",
 		"typescript": "^7.0.2",
 		"vitest": "^4.1.10",
 		"wrangler": "^4.87.0"
