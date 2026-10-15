@@ -260,4 +260,4 @@ Unlike ChirpIQX (4 personality modes for urgency), Wake Cormorant has **temporal
 
 ---
 
-**Part of the Cormorant Trinity**: [ChirpIQX](https://chirpiqx.com) (Sound) · [PerchIQX](https://perchiqx.com) (Space) · [WakeIQX](https://wakeiqx.com) (Time)
+**Part of the Cormorant Trinity**: [ChirpIQX](https://chirp.semanticintent.dev) (Sound) · [PerchIQX](https://perch.semanticintent.dev) (Space) · [WakeIQX](https://wake.semanticintent.dev) (Time)
