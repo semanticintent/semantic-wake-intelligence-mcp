@@ -46,16 +46,10 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"dependencies": {
-		"@cloudflare/agents": "^0.0.16",
-		"@modelcontextprotocol/sdk": "^1.30.0",
-		"agents": "^0.20.1",
-		"zod": "^4.4.2"
-	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.8",
 		"@cloudflare/vitest-pool-workers": "^0.18.8",
-		"@types/node": "^26.1.1",
+		"@types/node": "^26.6.6",
 		"@vitest/coverage-v8": "^4.1.10",
 		"@vitest/ui": "^4.1.10",
 		"typescript": "^7.0.2",
